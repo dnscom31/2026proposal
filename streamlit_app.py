@@ -6,6 +6,10 @@ import time
 from proposal_engine import ProposalEngine
 import streamlit.components.v1 as components
 
+st.write("Current Directory:", os.getcwd())
+st.write("Files in Directory:", os.listdir("."))
+# 실행 후 proposal_engine.py가 목록에 있는지 확인하세요.
+
 # ---------------------------------------------------------
 # 1. 초기 설정 및 세션 격리 (중요)
 # ---------------------------------------------------------
