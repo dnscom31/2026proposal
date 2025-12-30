@@ -23,12 +23,25 @@ from PIL import Image, ImageOps
 # -----------------------------
 # Marker patterns (template editing)
 # -----------------------------
-PAGE_BLOCK_RE = re.compile(r'\s*(.*?)\s*', re.S)
-TABLE_BLOCK_RE = re.compile(r'\s*(.*?)\s*', re.S)
-ICON_GROUP_RE = re.compile(r'\s*(.*?)\s*', re.S)
-TEXT_BLOCK_RE = re.compile(r'\s*(.*?)\s*', re.S)
+# Page markers: <!--PAGE_START:1--> ... <!--PAGE_END:1-->
+PAGE_BLOCK_RE = re.compile(
+    r"<!--\s*PAGE_START:(\d+)\s*-->(.*?)<!--\s*PAGE_END:\1\s*-->",
+    re.S | re.I,
+)
 
-RAW_PAGE_START_RE = re.compile(r'<div class="page"\b', re.I)
+# Table markers: <!--TABLE_START:1--> <table>...</table> <!--TABLE_END:1-->
+TABLE_BLOCK_RE = re.compile(
+    r"<!--\s*TABLE_START:(\d+)\s*-->(.*?)<!--\s*TABLE_END:\1\s*-->",
+    re.S | re.I,
+)
+
+# Icon group markers: <!--ICON_GROUP_START:key--> ... <!--ICON_GROUP_END:key-->
+ICON_GROUP_RE = re.compile(
+    r"<!--\s*ICON_GROUP_START:([A-Za-z0-9_\-]+)\s*-->(.*?)<!--\s*ICON_GROUP_END:\1\s*-->",
+    re.S | re.I,
+)
+
+RAW_PAGE_START_RE = re.compile(r'<div\s+class="page\b', re.I)
 RAW_TABLE_RE = re.compile(r'<table[^>]*>.*?</table>', re.S | re.I)
 
 
@@ -51,14 +64,10 @@ def _hash_file(path: str) -> str:
     return h.hexdigest()[:16]
 
 def _remove_all_markers(html_text: str) -> str:
-    html_text = re.sub(r'\s*', '', html_text)
-    html_text = re.sub(r'\s*', '', html_text)
-    html_text = re.sub(r'\s*', '', html_text)
-    html_text = re.sub(r'\s*', '', html_text)
-    html_text = re.sub(r'\s*', '', html_text)
-    html_text = re.sub(r'\s*', '', html_text)
-    html_text = re.sub(r'\s*', '', html_text)
-    html_text = re.sub(r'\s*', '', html_text)
+    """Remove internal edit markers from the final HTML output."""
+    html_text = re.sub(r"<!--\s*PAGE_(?:START|END):\d+\s*-->", "", html_text, flags=re.I)
+    html_text = re.sub(r"<!--\s*TABLE_(?:START|END):\d+\s*-->", "", html_text, flags=re.I)
+    html_text = re.sub(r"<!--\s*ICON_GROUP_(?:START|END):[A-Za-z0-9_\-]+\s*-->", "", html_text, flags=re.I)
     return html_text
 
 def _find_matching_div_end(html_text: str, start_idx: int) -> int:
@@ -167,27 +176,61 @@ def safe_html_to_plain_text(html_fragment: str) -> str:
     return html.unescape(s).strip()
 
 def ensure_page_markers(html_text: str) -> str:
-    if "\n{html_text[start:div_end]}\n")
-        last_pos, page_no = div_end, page_no + 1
+    """Ensure <!--PAGE_START:n--> ... <!--PAGE_END:n--> markers exist."""
+    if re.search(r"<!--\s*PAGE_START:\d+\s*-->", html_text, flags=re.I):
+        return html_text
+
+    out: List[str] = []
+    last_pos = 0
+    page_no = 1
+
+    for m in RAW_PAGE_START_RE.finditer(html_text):
+        div_start = m.start()
+        div_end = _find_matching_div_end(html_text, div_start)
+        if div_end == -1:
+            continue
+
+        block = html_text[div_start:div_end]
+        is_cover = ("cover-page" in block) or ("cover-title" in block) or ("cover-year" in block)
+
+        out.append(html_text[last_pos:div_start])
+
+        if is_cover and page_no == 1:
+            out.append(block)
+        else:
+            out.append(f"<!--PAGE_START:{page_no}-->\n{block}\n<!--PAGE_END:{page_no}-->")
+            page_no += 1
+
+        last_pos = div_end
+
     out.append(html_text[last_pos:])
     return "".join(out)
+
 
 def ensure_table_markers(html_text: str) -> str:
-    if "\n{m.group(0)}\n")
-        last_pos, table_no = m.end(), table_no + 1
+    """Ensure <!--TABLE_START:n--> ... <!--TABLE_END:n--> markers exist."""
+    if re.search(r"<!--\s*TABLE_START:\d+\s*-->", html_text, flags=re.I):
+        return html_text
+
+    out: List[str] = []
+    last_pos = 0
+    table_no = 1
+
+    for m in RAW_TABLE_RE.finditer(html_text):
+        out.append(html_text[last_pos:m.start()])
+        table_html = m.group(0)
+        out.append(f"<!--TABLE_START:{table_no}-->\n{table_html}\n<!--TABLE_END:{table_no}-->")
+        last_pos = m.end()
+        table_no += 1
+
     out.append(html_text[last_pos:])
     return "".join(out)
 
+
 def ensure_icon_markers(html_text: str) -> str:
-    if "\n" + new_html[div_start:div_end] + "\n" + new_html[div_end:]
-    # Centers list
-    idx2 = new_html.find("fa-hospital-user")
-    if idx2 != -1:
-        ul_start = new_html.rfind("<ul", 0, idx2)
-        ul_end = new_html.find("</ul>", idx2) + 5
-        if ul_start != -1:
-            new_html = new_html[:ul_start] + "\n" + new_html[ul_start:ul_end] + "\n" + new_html[ul_end:]
-    return new_html
+    """Ensure icon group markers exist (no-op for current template)."""
+    return html_text
+
 
 @dataclass
 class TemplateDocument:
@@ -205,11 +248,11 @@ class TemplateDocument:
             suffix=html_text[matches[-1].end() :]
         )
     def to_html(self) -> str:
-        # Renumber pages automatically
-        pages_html = []
+        # Renumber pages automatically and keep page markers.
+        pages_html: List[str] = []
         for i, page in enumerate(self.pages, 1):
             page = re.sub(r"(>Page\s*)\d+(\s*<)", rf"\g<1>{i}\2", page)
-            pages_html.append(f"\n{page}\n")
+            pages_html.append(f"<!--PAGE_START:{i}-->\n{page}\n<!--PAGE_END:{i}-->\n")
         return self.prefix + "".join(pages_html) + self.suffix
 
 # -----------------------------
@@ -428,34 +471,66 @@ class ProposalEngine:
     # Text Blocks
     def list_text_blocks(self, page_idx):
         doc = self.get_document()
-        if not (0 <= page_idx < len(doc.pages)): return []
+        if not (0 <= page_idx < len(doc.pages)):
+            return []
         html_t = doc.pages[page_idx]
+
         blocks = []
         for m in re.finditer(r'<div\s+class="user-text-block"[^>]*data-block-id="([^"]+)"[^>]*>', html_t):
-            bid = m.group(1)
-            end = _find_matching_div_end(html_t, m.start())
-            if end == -1: continue
-            chunk = html_t[m.start():end]
-            tm = re.search(r'<div\s+class="user-text-title"[^>]*>\s*(.*?)\s*</div>', chunk, re.S)
-            title = html.unescape(re.sub(r"<[^>]+>", "", tm.group(1)).strip()) if tm else bid
-            bm = re.search(rf'\s*(.*?)\s*', chunk, re.S)
-            blocks.append({"id": bid, "title": title, "text": safe_html_to_plain_text(bm.group(1) if bm else "")})
+            start = m.start()
+            end = _find_matching_div_end(html_t, start)
+            if end == -1:
+                continue
+            chunk = html_t[start:end]
+
+            title_m = re.search(r'<div\s+class="user-text-title"[^>]*>(.*?)</div>', chunk, flags=re.S)
+            title = html.unescape(re.sub(r"<[^>]+>", "", title_m.group(1)).strip()) if title_m else ""
+
+            body_m = re.search(r'</div>\s*(.*?)\s*</div>\s*$', chunk, flags=re.S)
+            body_html = body_m.group(1) if body_m else ""
+            blocks.append({
+                "id": m.group(1),
+                "title": title or "(제목 없음)",
+                "text": safe_html_to_plain_text(body_html),
+            })
         return blocks
 
     def save_text_block(self, page_idx, bid, title, text):
         doc = self.get_document()
+        if not (0 <= page_idx < len(doc.pages)):
+            return
         html_t = doc.pages[page_idx]
+
         m = re.search(rf'<div\s+class="user-text-block"[^>]*data-block-id="{re.escape(bid)}"[^>]*>', html_t)
-        if m:
-            start = m.start()
-            end = _find_matching_div_end(html_t, start)
-            if end != -1:
-                wrapper = html_t[start:end]
-                wrapper = re.sub(r'(<div\s+class="user-text-title"[^>]*>)(.*?)(</div>)', rf'\1{html.escape(title)}\3', wrapper, count=1, flags=re.S)
-                body = plain_text_to_safe_html(text)
-                wrapper = re.sub(rf'()(.*?)()', rf'\1\n{body}\n\3', wrapper, flags=re.S)
-                doc.pages[page_idx] = html_t[:start] + wrapper + html_t[end:]
-                self.save_document(doc)
+        if not m:
+            return
+
+        start = m.start()
+        end = _find_matching_div_end(html_t, start)
+        if end == -1:
+            return
+
+        wrapper = html_t[start:end]
+
+        wrapper = re.sub(
+            r'(<div\s+class="user-text-title"[^>]*>)(.*?)(</div>)',
+            rf'\1{html.escape(title)}\3',
+            wrapper,
+            count=1,
+            flags=re.S,
+        )
+
+        body = plain_text_to_safe_html(text)
+        wrapper = re.sub(
+            r'(</div>\s*)(.*?)(\s*</div>\s*)$',
+            rf'\1\n{body}\n\3',
+            wrapper,
+            count=1,
+            flags=re.S,
+        )
+
+        doc.pages[page_idx] = html_t[:start] + wrapper + html_t[end:]
+        self.save_document(doc)
 
     def add_text_block(self, page_idx):
         doc = self.get_document()
@@ -485,38 +560,90 @@ class ProposalEngine:
     
     def set_table_html(self, t_no, content):
         h = self.load_template_html()
-        def repl(m): return f"\n{content}\n" if int(m.group(1)) == t_no else m.group(0)
+
+        def repl(m):
+            if int(m.group(1)) != int(t_no):
+                return m.group(0)
+            return f"<!--TABLE_START:{t_no}-->\n{content}\n<!--TABLE_END:{t_no}-->"
+
         self.save_template_html(TABLE_BLOCK_RE.sub(repl, h))
 
     def get_process_steps(self):
-        m = re.search(r'\s*(.*?)\s*', self.load_template_html(), re.S)
-        if not m: return []
+        h = self.load_template_html()
+        m = None
+        for gm in ICON_GROUP_RE.finditer(h):
+            if gm.group(1) == "process_steps":
+                m = gm
+                break
+        if not m:
+            return []
+
+        group_html = m.group(2)
         items = []
-        for im in re.finditer(r'<div[^>]*class="feature-item"[^>]*>.*?<i[^>]*class="([^"]+)".*?<h4>(.*?)</h4>', m.group(1), re.S):
-            items.append({"icon": im.group(1), "label": im.group(2)})
+        for im in re.finditer(
+            r'<i[^>]*class="([^"]+)"[^>]*>.*?</i>\s*<br\s*/?>\s*<strong>(.*?)</strong>',
+            group_html,
+            flags=re.S | re.I,
+        ):
+            items.append({"icon": im.group(1).strip(), "label": html.unescape(im.group(2)).strip()})
         return items
 
     def save_process_steps(self, items):
-        inner = "".join([f'<div class="feature-item"><i class="{html.escape(x["icon"])}"></i><h4>{html.escape(x["label"])}</h4></div>' for x in items])
-        block = f'<div class="feature-grid" style="grid-template-columns: repeat(4, 1fr);">{inner}</div>'
+        container_style = "margin-top: 30px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center;"
+        item_style = "background:#f4f4f4; padding:15px; border-radius:8px;"
+        icon_style = "font-size:20pt; color:var(--secondary-purple); margin-bottom:10px;"
+
+        inner = ""
+        for x in items:
+            icon_cls = html.escape(str(x.get("icon", "")).strip())
+            label = html.escape(str(x.get("label", "")).strip())
+            inner += (
+                f'<div style="{item_style}">'
+                f'<i class="{icon_cls}" style="{icon_style}"></i><br>'
+                f'<strong>{label}</strong>'
+                f'</div>'
+            )
+
+        block = f'<div style="{container_style}">{inner}</div>'
         self._save_icon_group("process_steps", block)
 
     def get_centers_items(self):
-        m = re.search(r'\s*(.*?)\s*', self.load_template_html(), re.S)
-        if not m: return []
+        h = self.load_template_html()
+        m = None
+        for gm in ICON_GROUP_RE.finditer(h):
+            if gm.group(1) == "centers_list":
+                m = gm
+                break
+        if not m:
+            return []
+
+        group_html = m.group(2)
         items = []
-        for im in re.finditer(r'<li[^>]*>.*?<i[^>]*class="([^"]+)".*?</i>\s*(.*?)</li>', m.group(1), re.S):
-            items.append({"icon": im.group(1), "label": im.group(2)})
+        for im in re.finditer(
+            r"<li[^>]*>\s*<i[^>]*class=\"([^\"]+)\"[^>]*></i>\s*([^<]+)\s*</li>",
+            group_html,
+            flags=re.S | re.I,
+        ):
+            items.append({"icon": im.group(1).strip(), "label": html.unescape(im.group(2)).strip()})
         return items
 
     def save_centers_items(self, items):
-        inner = "".join([f'<li><i class="{html.escape(x["icon"])}"></i> {html.escape(x["label"])}</li>' for x in items])
+        inner = ""
+        for x in items:
+            icon_cls = html.escape(str(x.get("icon", "")).strip())
+            label = html.escape(str(x.get("label", "")).strip())
+            inner += f'<li><i class="{icon_cls}"></i> {label}</li>'
         block = f'<ul style="display: flex; justify-content: space-around; list-style: none; font-weight: bold;">{inner}</ul>'
         self._save_icon_group("centers_list", block)
 
     def _save_icon_group(self, key, content):
         h = self.load_template_html()
-        def repl(m): return f"\n{content}\n" if m.group(1) == key else m.group(0)
+
+        def repl(m):
+            if m.group(1) != key:
+                return m.group(0)
+            return f"<!--ICON_GROUP_START:{key}-->\n{content}\n<!--ICON_GROUP_END:{key}-->"
+
         self.save_template_html(ICON_GROUP_RE.sub(repl, h))
 
     # Build
