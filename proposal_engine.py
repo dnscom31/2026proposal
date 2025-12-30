@@ -251,7 +251,7 @@ class TemplateDocument:
         # Renumber pages automatically and keep page markers.
         pages_html: List[str] = []
         for i, page in enumerate(self.pages, 1):
-            page = re.sub(r"(>Page\s*)\d+(\s*<)", rf"\g<1>{i}\2", page)
+            page = re.sub(r"(>Page\s*)\d+(\s*<)", rf"\g<1>{i}\g<2>", page)
             pages_html.append(f"<!--PAGE_START:{i}-->\n{page}\n<!--PAGE_END:{i}-->\n")
         return self.prefix + "".join(pages_html) + self.suffix
 
@@ -514,7 +514,7 @@ class ProposalEngine:
 
         wrapper = re.sub(
             r'(<div\s+class="user-text-title"[^>]*>)(.*?)(</div>)',
-            rf'\1{html.escape(title)}\3',
+            rf'\g<1>{html.escape(title)}\g<3>',
             wrapper,
             count=1,
             flags=re.S,
@@ -647,16 +647,16 @@ class ProposalEngine:
         self.save_template_html(ICON_GROUP_RE.sub(repl, h))
 
     # Build
-    def build_output_html(self, recipient, proposer, tel, primary, accent):
+    def build_output_html(self, recipient, proposer, tel, primary, accent, attachment_image_paths=None):
         doc = self.get_document()
         # Filter enabled pages
         doc.pages = [p for i, p in enumerate(doc.pages) if i < len(self.page_enabled) and self.page_enabled[i]]
         html_text = doc.to_html()
         
         replacements = {
-            r"(<strong>수신\s*:\s*</strong>\s*)([^<]+)": rf"\1{recipient}",
-            r"(<strong>제안\s*:\s*</strong>\s*)([^<]+)": rf"\1{proposer}",
-            r"(Tel\.\s*)([0-9\s\-]+)": rf"\1{tel}",
+            r"(<strong>수신\s*:\s*</strong>\s*)([^<]+)": rf"\g<1>{recipient}",
+            r"(<strong>제안\s*:\s*</strong>\s*)([^<]+)": rf"\g<1>{proposer}",
+            r"(Tel\.\s*)([0-9\s\-]+)": rf"\g<1>{tel}",
             r"--primary-purple:\s*#[0-9A-Fa-f]{6}\s*;": f"--primary-purple: {primary};",
             r"--accent-gold:\s*#[0-9A-Fa-f]{6}\s*;": f"--accent-gold: {accent};"
         }
@@ -667,6 +667,41 @@ class ProposalEngine:
             if meta["path"] and os.path.exists(meta["path"]):
                 with open(meta["path"], "rb") as f:
                     b64 = base64.b64encode(f.read()).decode()
-                html_text = html_text.replace(f'src="{meta["placeholder"]}"', f'src="data:image/jpeg;base64,{b64}"')
+                html_text = html_text.replace(f'src="{meta["placeholder"]}"', f'src="data:{mime};base64,{b64}"')
         
+
+# --- Append attachment image pages (optional) ---
+if attachment_image_paths:
+    attach_pages = []
+    for idx, img_path in enumerate(attachment_image_paths, 1):
+        if not img_path or not os.path.exists(img_path):
+            continue
+        try:
+            with open(img_path, "rb") as f:
+                b64 = base64.b64encode(f.read()).decode()
+            ext = os.path.splitext(img_path)[1].lower()
+            mime = "image/png" if ext == ".png" else "image/jpeg"
+            attach_pages.append(f'''
+<div class="page">
+    <div class="page-header">
+        <h2>부록 {idx:02d}. 첨부 자료</h2>
+        <span>이미지 첨부</span>
+    </div>
+    <div style="flex: 1; display: flex; align-items: center; justify-content: center; margin-top: 10px;">
+        <img src="data:{mime};base64,{b64}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+    </div>
+    <div class="page-footer"><span>2026 Health Checkup Proposal</span><span>Page 0</span></div>
+</div>
+            ''')
+        except Exception:
+            continue
+
+    if attach_pages:
+        # Insert pages before the closing </div> ... </body> block (robust against whitespace/newlines)
+        m = re.search(r"</div>\s*</body>", html_text, flags=re.I)
+        if m:
+            html_text = html_text[:m.start()] + "\n".join(attach_pages) + "\n" + html_text[m.start():]
+        else:
+            html_text += "\n" + "\n".join(attach_pages) + "\n"
+
         return _remove_all_markers(html_text)
