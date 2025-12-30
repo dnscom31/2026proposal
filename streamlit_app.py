@@ -1,345 +1,272 @@
 import streamlit as st
 import os
 import shutil
-import base64
+import tempfile
+import time
 from proposal_engine import ProposalEngine
+import streamlit.components.v1 as components
 
 # ---------------------------------------------------------
-# 1. 초기 설정 및 엔진 로드
+# 1. 초기 설정 및 세션 격리 (중요)
 # ---------------------------------------------------------
-st.set_page_config(
-    page_title="뉴고려병원 제안서 생성기",
-    page_icon="🏥",
-    layout="wide"
-)
+st.set_page_config(page_title="뉴고려병원 제안서 생성기", page_icon="🏥", layout="wide")
 
-# 캐시를 사용해 엔진을 한 번만 로드하고 세션 내에서 유지
+# 원본 템플릿 파일이 있는 경로 (이 파이썬 파일과 같은 위치라고 가정)
+BASE_SRC_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATE_FILE = "proposal_template.html"
+
+# 세션별 독립적인 작업 공간 생성 함수
+def init_session_engine():
+    # 1. 임시 디렉토리 생성
+    temp_dir = tempfile.mkdtemp()
+    
+    # 2. 필수 폴더 구조 생성
+    assets_dir = os.path.join(temp_dir, "proposal_assets")
+    os.makedirs(assets_dir, exist_ok=True)
+    
+    # 3. 원본 템플릿 복사 (없으면 에러)
+    src_template = os.path.join(BASE_SRC_DIR, TEMPLATE_FILE)
+    if os.path.exists(src_template):
+        shutil.copy(src_template, os.path.join(assets_dir, TEMPLATE_FILE))
+    else:
+        st.error(f"⚠️ 원본 템플릿({TEMPLATE_FILE})을 찾을 수 없습니다.")
+        return None, None
+
+    # 4. 엔진 초기화 (임시 디렉토리를 base_dir로 설정)
+    engine = ProposalEngine(temp_dir)
+    return engine, temp_dir
+
 if 'engine' not in st.session_state:
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    # 엔진 초기화 (필요한 폴더 생성 등 수행)
-    st.session_state.engine = ProposalEngine(base_dir)
+    with st.spinner("작업 공간을 생성 중입니다..."):
+        engine, temp_dir = init_session_engine()
+        st.session_state.engine = engine
+        st.session_state.temp_dir = temp_dir
+        # 기본값 초기화
+        st.session_state['recipient'] = "임직원 검진 담당자 제위"
+        st.session_state['proposer'] = "뉴고려병원 이준원 팀장"
+        st.session_state['tel'] = "1833 - 9988"
+        st.session_state['primary_color'] = "#4A148C"
+        st.session_state['accent_color'] = "#D4AF37"
 
 engine = st.session_state.engine
 
-# CSS 스타일링 (폰트 등)
+# 스타일 조정
 st.markdown("""
-    <style>
-    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
-    .stTabs [data-baseweb="tab"] { height: 50px; white-space: pre-wrap; background-color: #f0f2f6; border-radius: 4px 4px 0 0; gap: 1px;}
-    .stTabs [aria-selected="true"] { background-color: #ffffff; border-top: 2px solid #4A148C; }
-    </style>
+<style>
+    .stTabs [data-baseweb="tab-list"] { gap: 8px; }
+    .stTabs [data-baseweb="tab"] { height: 45px; background-color: #f8f9fa; border-radius: 5px; }
+    .stTabs [aria-selected="true"] { background-color: #e3f2fd; border-bottom: 2px solid #4A148C; font-weight: bold; }
+    div[data-testid="stExpander"] div[role="button"] p { font-size: 1.1rem; font-weight: 600; }
+</style>
 """, unsafe_allow_html=True)
 
 st.title("🏥 뉴고려병원 건강검진 제안서 생성기")
-st.caption("Web Version v1.0 | Streamlit")
+st.caption("Web Version v2.0 | Isolated Session")
 
 # ---------------------------------------------------------
-# 2. 탭 구성
+# 2. 사이드바: 공통 설정 (항상 보이는 영역)
 # ---------------------------------------------------------
-tab_basic, tab_layout, tab_images, tab_pages, tab_content, tab_export = st.tabs([
-    "기본 정보", "레이아웃/디자인", "이미지 관리", "페이지 순서", "세부 내용 편집", "제안서 생성(다운로드)"
+with st.sidebar:
+    st.header("⚙️ 기본 설정")
+    st.session_state['recipient'] = st.text_input("수신 (고객사)", st.session_state['recipient'])
+    st.session_state['proposer'] = st.text_input("제안자", st.session_state['proposer'])
+    st.session_state['tel'] = st.text_input("문의처", st.session_state['tel'])
+    
+    st.divider()
+    
+    c1, c2 = st.columns(2)
+    with c1:
+        st.session_state['primary_color'] = st.color_picker("메인 색상", st.session_state['primary_color'])
+    with c2:
+        st.session_state['accent_color'] = st.color_picker("강조 색상", st.session_state['accent_color'])
+    
+    st.info("💡 사이드바의 설정은 모든 페이지에 공통 적용됩니다.")
+    
+    # 미리보기/다운로드 버튼을 사이드바 하단에도 배치
+    st.divider()
+    if st.button("🔄 미리보기 갱신", use_container_width=True):
+        st.rerun()
+
+# ---------------------------------------------------------
+# 3. 메인 탭 구성
+# ---------------------------------------------------------
+tab_layout, tab_images, tab_pages, tab_content, tab_export = st.tabs([
+    "📐 레이아웃", "🖼️ 이미지", "📑 페이지 구성", "📝 상세 편집", "📤 내보내기"
 ])
 
-# ---------------------------------------------------------
-# TAB 1: 기본 정보 & 색상
-# ---------------------------------------------------------
-with tab_basic:
-    col1, col2 = st.columns(2)
+# --- TAB 1: 레이아웃 ---
+with tab_layout:
+    st.subheader("레이아웃 & 여백 설정")
+    st.caption("CSS 변수를 조절하여 문서 전체의 간격과 이미지 크기를 변경합니다.")
     
+    cur = engine.layout_settings
+    new_l = cur.copy()
+    
+    col1, col2 = st.columns(2)
     with col1:
-        st.subheader("📝 기본 정보 입력")
-        recipient = st.text_input("수신 (고객사)", value="임직원 검진 담당자 제위")
-        proposer = st.text_input("제안자 (담당자)", value="뉴고려병원 이준원 팀장")
-        tel = st.text_input("상담 전화번호", value="1833 - 9988")
+        st.markdown("##### 📄 문서 여백")
+        new_l['page_padding_mm'] = st.slider("페이지 내부 여백 (mm)", 5, 40, cur['page_padding_mm'])
+        new_l['page_gap_px'] = st.slider("페이지 사이 간격 (px)", 0, 50, cur['page_gap_px'])
         
-        # 세션에 값 저장
-        st.session_state['recipient'] = recipient
-        st.session_state['proposer'] = proposer
-        st.session_state['tel'] = tel
+        st.markdown("##### 🖼️ 기본 이미지")
+        new_l['img_default_height_px'] = st.number_input("기본 이미지 높이 (px)", 100, 500, cur['img_default_height_px'])
 
     with col2:
-        st.subheader("🎨 브랜드 컬러")
-        primary_color = st.color_picker("메인 컬러 (Primary)", "#4A148C")
-        accent_color = st.color_picker("포인트 컬러 (Accent)", "#D4AF37")
-        
-        st.session_state['primary_color'] = primary_color
-        st.session_state['accent_color'] = accent_color
-        
-        st.info("※ 선택한 색상은 최종 HTML 생성 시 반영됩니다.")
+        st.markdown("##### 📏 요소 간격")
+        new_l['img_margin_v_px'] = st.number_input("이미지 상하 여백", 0, 50, cur['img_margin_v_px'])
+        new_l['highlight_margin_v_px'] = st.number_input("강조박스 상하 여백", 0, 50, cur['highlight_margin_v_px'])
+        new_l['table_cell_padding_px'] = st.number_input("표 내부 여백 (Cell Padding)", 2, 20, cur['table_cell_padding_px'])
 
-# ---------------------------------------------------------
-# TAB 2: 레이아웃 설정
-# ---------------------------------------------------------
-with tab_layout:
-    st.subheader("📏 여백 및 크기 조정 (CSS 변수)")
-    st.caption("변경 즉시 엔진 설정에 저장되며, 이미지 재가공이 발생할 수 있습니다.")
-    
-    current_layout = engine.get_layout_settings()
-    new_layout = current_layout.copy()
-    
-    col_l1, col_l2, col_l3 = st.columns(3)
-    
-    with col_l1:
-        st.markdown("**기본 여백**")
-        new_layout['page_padding_mm'] = st.number_input("페이지 안쪽 여백 (mm)", 5, 50, current_layout['page_padding_mm'])
-        new_layout['page_gap_px'] = st.number_input("페이지 간격 (화면용 px)", 0, 100, current_layout['page_gap_px'])
-        new_layout['user_block_gap_px'] = st.number_input("텍스트 블록 위 공백 (px)", 0, 100, current_layout['user_block_gap_px'])
+    if st.button("설정 적용하기"):
+        engine.set_layout_settings(new_l)
+        st.success("레이아웃이 업데이트되었습니다.")
 
-    with col_l2:
-        st.markdown("**콘텐츠 간격**")
-        new_layout['img_default_height_px'] = st.number_input("기본 이미지 높이 (px)", 100, 600, current_layout['img_default_height_px'])
-        new_layout['img_margin_v_px'] = st.number_input("이미지 위/아래 여백 (px)", 0, 100, current_layout['img_margin_v_px'])
-        new_layout['highlight_margin_v_px'] = st.number_input("강조박스 위/아래 여백 (px)", 0, 100, current_layout['highlight_margin_v_px'])
-
-    with col_l3:
-        st.markdown("**특수 이미지 높이**")
-        new_layout['img_h_300_px'] = st.number_input("대형 (300px 영역)", 100, 800, current_layout['img_h_300_px'])
-        new_layout['img_h_250_px'] = st.number_input("중형 (250px 영역)", 100, 800, current_layout['img_h_250_px'])
-        new_layout['img_h_180_px'] = st.number_input("소형 (180px 영역)", 50, 500, current_layout['img_h_180_px'])
-
-    # 변경 사항 적용 버튼
-    if st.button("레이아웃 설정 저장 및 적용"):
-        try:
-            engine.set_layout_settings(new_layout)
-            st.success("레이아웃 설정이 저장되었습니다.")
-        except Exception as e:
-            st.error(f"오류 발생: {e}")
-
-# ---------------------------------------------------------
-# TAB 3: 이미지 관리
-# ---------------------------------------------------------
+# --- TAB 2: 이미지 ---
 with tab_images:
-    st.subheader("🖼️ 이미지 교체")
-    st.info("이미지를 업로드하면 자동으로 리사이징되어 프로젝트 폴더에 저장됩니다.")
-    
-    # 이미지 목록 순회
-    for key, data in engine.image_map.items():
-        with st.expander(f"📷 {key}", expanded=False):
-            col_img1, col_img2 = st.columns([1, 2])
-            
-            current_path = data.get("path")
-            
-            with col_img1:
-                if current_path and os.path.exists(current_path):
-                    st.image(current_path, caption="현재 적용된 이미지")
-                else:
-                    st.warning("이미지 미설정")
-            
-            with col_img2:
-                uploaded_file = st.file_uploader(f"'{key}' 이미지 업로드", type=['jpg', 'png', 'jpeg'], key=f"uploader_{key}")
-                
-                if uploaded_file is not None:
-                    # 임시 파일로 저장 후 엔진에 전달
-                    temp_dir = os.path.join(engine.assets_dir, "temp_upload")
-                    os.makedirs(temp_dir, exist_ok=True)
-                    temp_path = os.path.join(temp_dir, uploaded_file.name)
-                    
-                    with open(temp_path, "wb") as f:
-                        f.write(uploaded_file.getbuffer())
-                    
-                    try:
-                        # 엔진이 알아서 원본 저장/리사이징/설정저장 수행
-                        final_path = engine.copy_resize_to_local(key, temp_path)
-                        engine.image_map[key]["path"] = final_path
-                        engine.save_settings()
-                        st.success(f"{key} 이미지가 업데이트되었습니다!")
-                        st.rerun() # 새로고침하여 이미지 반영
-                    except Exception as e:
-                        st.error(f"이미지 처리 실패: {e}")
+    st.subheader("이미지 교체")
+    st.caption("업로드된 이미지는 설정된 레이아웃 크기에 맞춰 자동 리사이징됩니다.")
 
-# ---------------------------------------------------------
-# TAB 4: 페이지 관리
-# ---------------------------------------------------------
+    # 2열 그리드로 표시
+    keys = list(engine.image_map.keys())
+    for i in range(0, len(keys), 2):
+        cols = st.columns(2)
+        for j in range(2):
+            if i + j >= len(keys): break
+            key = keys[i+j]
+            data = engine.image_map[key]
+            
+            with cols[j]:
+                with st.expander(f"📷 {key}", expanded=True):
+                    # 현재 이미지 표시
+                    if data["path"] and os.path.exists(data["path"]):
+                        st.image(data["path"], use_container_width=True)
+                    else:
+                        st.warning("이미지 없음")
+                    
+                    # 업로드
+                    uploaded = st.file_uploader(f"변경: {key}", type=['jpg', 'png'], key=f"up_{key}")
+                    if uploaded:
+                        # 임시 파일 저장 -> 엔진 처리
+                        t_path = os.path.join(st.session_state.temp_dir, uploaded.name)
+                        with open(t_path, "wb") as f: f.write(uploaded.getbuffer())
+                        engine.copy_resize_to_local(key, t_path)
+                        st.success("변경 완료!")
+                        time.sleep(0.5)
+                        st.rerun()
+
+# --- TAB 3: 페이지 구성 ---
 with tab_pages:
-    st.subheader("📑 페이지 순서 및 활성화")
-    
-    col_ctrl, col_list = st.columns([1, 2])
-    
-    with col_ctrl:
-        st.markdown("##### 페이지 제어")
-        if st.button("➕ 새 페이지 추가"):
+    c1, c2 = st.columns([3, 1])
+    with c1: st.subheader("페이지 순서 및 활성화")
+    with c2: 
+        if st.button("➕ 페이지 추가"):
             engine.add_new_page()
             st.rerun()
-            
-    with col_list:
-        pages = engine.get_pages()
-        enabled_status = engine.page_enabled
-        
-        # 페이지 리스트 출력
-        for idx, page_html in enumerate(pages):
-            # 페이지 제목 추출 (간단히 h2 태그 내용이나 인덱스 사용)
-            title_display = f"Page {idx+1}"
-            
-            # 페이지 컨테이너
-            with st.container():
-                c1, c2, c3, c4 = st.columns([0.5, 3, 0.5, 0.5])
-                
-                # 활성화 체크박스
-                is_enabled = enabled_status[idx] if idx < len(enabled_status) else True
-                new_enabled = c1.checkbox("사용", value=is_enabled, key=f"chk_page_{idx}", label_visibility="collapsed")
-                
-                if new_enabled != is_enabled:
-                    engine.set_page_enabled(idx, new_enabled)
-                    st.rerun()
-                
-                # 페이지 미리보기 텍스트 (앞부분만)
-                clean_text = page_html.replace("<", "&lt;").replace(">", "&gt;")[:100] + "..."
-                c2.markdown(f"**{title_display}** : `{clean_text}`")
-                
-                # 순서 이동 버튼
-                if c3.button("⬆️", key=f"up_{idx}"):
-                    engine.move_page(idx, -1)
-                    st.rerun()
-                if c4.button("⬇️", key=f"down_{idx}"):
-                    engine.move_page(idx, 1)
-                    st.rerun()
-                    
-                # 삭제/복제 (Expander 안에 숨김)
-                with st.expander("추가 옵션 (복제/삭제)"):
-                    if st.button("복제하기", key=f"dup_{idx}"):
-                        engine.duplicate_page(idx)
-                        st.rerun()
-                    if st.button("삭제하기", key=f"del_{idx}"):
-                        engine.delete_page(idx)
-                        st.rerun()
-            st.divider()
 
-# ---------------------------------------------------------
-# TAB 5: 내용 편집 (텍스트/표/아이콘)
-# ---------------------------------------------------------
+    pages = engine.get_pages()
+    enabled = engine.page_enabled
+    
+    for idx, page in enumerate(pages):
+        with st.container(border=True):
+            col_check, col_info, col_act = st.columns([0.5, 4, 1.5])
+            
+            is_on = enabled[idx] if idx < len(enabled) else True
+            if col_check.checkbox(f"P{idx+1}", value=is_on, key=f"chk_{idx}") != is_on:
+                engine.set_page_enabled(idx, not is_on)
+                st.rerun()
+            
+            # 페이지 내용 요약 (HTML 태그 제거)
+            preview_text = re.sub(r'<[^>]+>', ' ', page)[:60].strip()
+            col_info.markdown(f"**Page {idx+1}**: {preview_text}...")
+            
+            # 컨트롤 버튼
+            b1, b2, b3, b4 = col_act.columns(4)
+            if b1.button("⬆️", key=f"u{idx}"): engine.move_page(idx, -1); st.rerun()
+            if b2.button("⬇️", key=f"d{idx}"): engine.move_page(idx, 1); st.rerun()
+            if b3.button("복제", key=f"cp{idx}"): engine.duplicate_page(idx); st.rerun()
+            if b4.button("삭제", key=f"rm{idx}"): engine.delete_page(idx); st.rerun()
+
+# --- TAB 4: 상세 편집 ---
 with tab_content:
-    sub_tab_text, sub_tab_table, sub_tab_icon = st.tabs(["텍스트 블록", "표(Table)", "아이콘 목록"])
+    mode = st.radio("편집 모드 선택", ["텍스트 내용", "표(Table) 데이터", "아이콘/리스트"], horizontal=True)
+    st.divider()
     
-    # --- 1. 텍스트 블록 ---
-    with sub_tab_text:
-        st.markdown("#### 📝 페이지별 텍스트 블록 편집")
-        
+    if mode == "텍스트 내용":
         pages = engine.get_pages()
-        page_opts = [f"Page {i+1}" for i in range(len(pages))]
-        selected_page_idx = st.selectbox("편집할 페이지 선택", range(len(pages)), format_func=lambda x: page_opts[x])
+        sel_p = st.selectbox("페이지 선택", range(len(pages)), format_func=lambda x: f"Page {x+1}")
         
-        blocks = engine.list_text_blocks(selected_page_idx)
-        
+        blocks = engine.list_text_blocks(sel_p)
         if not blocks:
-            st.info("이 페이지에는 편집 가능한 텍스트 블록이 없습니다.")
-            if st.button("새 텍스트 블록 추가"):
-                engine.add_text_block(selected_page_idx)
-                st.rerun()
+            st.info("편집 가능한 텍스트 블록이 없습니다.")
+            if st.button("새 블록 추가"): engine.add_text_block(sel_p); st.rerun()
         else:
-            block_opts = [f"{b['id']} | {b['title']}" for b in blocks]
-            selected_block_idx = st.selectbox("편집할 블록 선택", range(len(blocks)), format_func=lambda x: block_opts[x])
+            sel_b = st.selectbox("블록 선택", range(len(blocks)), format_func=lambda x: f"{blocks[x]['title']}")
+            target = blocks[sel_b]
             
-            target_block = blocks[selected_block_idx]
-            
-            with st.form(key="text_edit_form"):
-                new_title = st.text_input("블록 제목", value=target_block['title'])
-                new_text = st.text_area("내용 (줄바꿈: 문단구분, '- ': 글머리기호)", value=target_block['text'], height=200)
-                
+            with st.form("edit_text"):
+                nt = st.text_input("제목", target['title'])
+                nc = st.text_area("내용 (- 로 시작하면 리스트)", target['text'], height=200)
                 if st.form_submit_button("저장"):
-                    engine.save_text_block(selected_page_idx, target_block['id'], new_title, new_text)
-                    st.success("텍스트 블록이 저장되었습니다.")
+                    engine.save_text_block(sel_p, target['id'], nt, nc)
+                    st.success("저장됨")
                     st.rerun()
-
-            col_del, _ = st.columns([1, 4])
-            if col_del.button("이 블록 삭제"):
-                engine.delete_text_block(selected_page_idx, target_block['id'])
-                st.warning("블록이 삭제되었습니다.")
+            if st.button("🗑️ 이 블록 삭제"):
+                engine.delete_text_block(sel_p, target['id'])
                 st.rerun()
-    
-    # --- 2. 표 편집 ---
-    with sub_tab_table:
-        st.markdown("#### 📊 HTML 테이블 직접 편집")
-        tables = engine.list_tables()
-        if not tables:
-            st.warning("감지된 테이블이 없습니다.")
+
+    elif mode == "표(Table) 데이터":
+        t_ids = engine.list_tables()
+        if t_ids:
+            tid = st.selectbox("테이블 선택", t_ids, format_func=lambda x: f"Table {x}")
+            html_val = engine.get_table_html(tid)
+            new_html = st.text_area("HTML 직접 편집", html_val, height=300)
+            if st.button("표 저장"):
+                engine.set_table_html(tid, new_html)
+                st.success("저장되었습니다.")
         else:
-            table_opts = [f"TABLE {t}" for t in tables]
-            selected_table_num = st.selectbox("편집할 테이블 선택", tables, format_func=lambda x: f"Table {x}")
-            
-            current_html = engine.get_table_html(selected_table_num)
-            
-            new_table_html = st.text_area("HTML 코드 편집", value=current_html, height=300)
-            
-            c_t1, c_t2, c_t3 = st.columns(3)
-            if c_t1.button("표 저장"):
-                engine.set_table_html(selected_table_num, new_table_html)
-                st.success("표가 저장되었습니다.")
-            
-            if c_t2.button("행 추가 (빈 줄)"):
-                engine.add_empty_row_to_table(selected_table_num)
-                st.rerun()
-                
-            if c_t3.button("내용 비우기"):
-                engine.clear_table(selected_table_num)
-                st.rerun()
+            st.warning("테이블이 없습니다.")
 
-    # --- 3. 아이콘 목록 ---
-    with sub_tab_icon:
-        st.markdown("#### 🧩 아이콘/센터 목록 관리")
-        
-        icon_type = st.radio("편집 대상", ["검진 프로세스 (Process Steps)", "진료 센터 목록 (Centers List)"])
-        
-        if icon_type == "검진 프로세스 (Process Steps)":
-            items = engine.get_process_steps()
-            save_func = engine.save_process_steps
+    elif mode == "아이콘/리스트":
+        grp = st.selectbox("그룹 선택", ["process_steps", "centers_list"])
+        if grp == "process_steps":
+            data = engine.get_process_steps()
+            edited = st.data_editor(data, num_rows="dynamic", use_container_width=True)
+            if st.button("프로세스 저장"):
+                engine.save_process_steps(edited)
+                st.success("저장됨")
         else:
-            items = engine.get_centers_items()
-            save_func = engine.save_centers_items
-            
-        # 리스트 에디터 (데이터프레임 방식이 편집하기 편함)
-        edit_data = []
-        for it in items:
-            edit_data.append({"icon": it['icon'], "label": it['label']})
-            
-        edited_df = st.data_editor(edit_data, num_rows="dynamic", use_container_width=True)
-        
-        if st.button("아이콘 목록 저장"):
-            # DF -> List[Dict] 변환
-            new_items = [{"icon": r["icon"], "label": r["label"]} for r in edited_df]
-            save_func(new_items)
-            st.success("저장되었습니다.")
+            data = engine.get_centers_items()
+            edited = st.data_editor(data, num_rows="dynamic", use_container_width=True)
+            if st.button("센터 목록 저장"):
+                engine.save_centers_items(edited)
+                st.success("저장됨")
 
-# ---------------------------------------------------------
-# TAB 6: 내보내기
-# ---------------------------------------------------------
+# --- TAB 5: 내보내기 ---
 with tab_export:
-    st.subheader("📤 제안서 최종 생성")
+    st.subheader("최종 결과물 확인 및 다운로드")
     
-    st.markdown("""
-    1. 위의 탭들에서 내용을 모두 수정한 후 아래 버튼을 누르세요.
-    2. 생성된 HTML 파일은 모든 이미지와 스타일이 내장되어 있어 **인터넷 없이도 열립니다.**
-    """)
-    
-    # 미리보기 기능 (HTML이 복잡해서 전체 렌더링은 iframe으로 제한적일 수 있음)
-    if st.checkbox("미리보기 생성 (렌더링에 시간이 걸릴 수 있습니다)"):
-        try:
-            preview_html = engine.build_output_html(
-                recipient=st.session_state.get('recipient', "고객사"),
-                proposer=st.session_state.get('proposer', "담당자"),
-                tel=st.session_state.get('tel', "000-0000"),
-                primary_color=st.session_state.get('primary_color', "#4A148C"),
-                accent_color=st.session_state.get('accent_color', "#D4AF37")
+    # HTML 생성
+    try:
+        final_html = engine.build_output_html(
+            st.session_state['recipient'], st.session_state['proposer'],
+            st.session_state['tel'], st.session_state['primary_color'],
+            st.session_state['accent_color']
+        )
+        
+        col_down, col_view = st.columns([1, 1])
+        with col_down:
+            st.download_button(
+                "📥 HTML 파일 다운로드", 
+                data=final_html, 
+                file_name=f"제안서_{st.session_state['recipient']}.html",
+                mime="text/html",
+                use_container_width=True,
+                type="primary"
             )
-            st.components.v1.html(preview_html, height=800, scrolling=True)
-        except Exception as e:
-            st.error(f"미리보기 생성 중 오류: {e}")
-
-    # 다운로드 버튼
-    # 버튼 클릭 시점에 HTML 생성
-    final_html = engine.build_output_html(
-        recipient=st.session_state.get('recipient', ""),
-        proposer=st.session_state.get('proposer', ""),
-        tel=st.session_state.get('tel', ""),
-        primary_color=st.session_state.get('primary_color', "#4A148C"),
-        accent_color=st.session_state.get('accent_color', "#D4AF37")
-    )
-    
-    # 파일명 생성
-    file_name = f"제안서_{st.session_state.get('recipient', 'Client')}.html"
-    
-    st.download_button(
-        label="📥 HTML 제안서 다운로드",
-        data=final_html,
-        file_name=file_name,
-        mime="text/html"
-    )
+        
+        st.markdown("---")
+        st.markdown("**👇 미리보기 (실제 파일과 동일)**")
+        components.html(final_html, height=800, scrolling=True)
+        
+    except Exception as e:
+        st.error(f"생성 중 오류 발생: {e}")
