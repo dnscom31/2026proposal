@@ -1,11 +1,16 @@
 import streamlit as st
 import os
+import sys
+
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 import shutil
 import tempfile
 import time
-from proposal_engine import ProposalEngine
-import streamlit.components.v1 as components
 
+# 이제 import가 정상적으로 될 것입니다.
+from proposal_engine import ProposalEngine
 
 # ---------------------------------------------------------
 # 1. 초기 설정 및 세션 격리 (중요)
