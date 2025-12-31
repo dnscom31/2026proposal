@@ -43,6 +43,9 @@ try:
             "--accent-navy": accent_navy,
         },
     )
+
+    # Streamlit 미리보기/다운로드에서 이미지가 보이도록 자동으로 data URL로 변환
+    final_html = engine.embed_attachment_images(final_html)
 except Exception as e:
     st.error(f"템플릿 처리 실패: {e}")
     st.stop()
