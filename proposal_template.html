@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -13,10 +11,12 @@
     :root {
         --primary-purple: #4A148C;
         --secondary-purple: #7B1FA2;
+        --light-purple: #E1BEE7;
+        --bg-purple-light: #F3E5F5;
         --accent-gold: #D4AF37;
         --text-dark: #222222;
         --bg-light: #F8F9FA;
-    
+
         --page-padding: 20mm;
         --page-gap: 20px;
         --img-box-height: 220px;
@@ -25,74 +25,63 @@
         --table-margin-top: 10px;
         --table-cell-padding: 7px;
         --user-block-gap: 12px;
+        
+        /* Image Heights */
         --img-h-300: 300px;
         --img-h-250: 250px;
+        --img-h-220: 220px; /* 1페이지용 조절된 높이 */
         --img-h-180: 180px;
-        --img-h-150: 150px;}
+        --img-h-150: 150px;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
     body { background-color: #555; font-family: 'Noto Sans KR', sans-serif; font-size: 10.5pt; line-height: 1.5; color: var(--text-dark); }
+    
     .document-container { width: 210mm; margin: 40px auto; }
+    
     .page {
         width: 210mm; height: 297mm; background: white; padding: var(--page-padding);
         position: relative; margin-bottom: var(--page-gap); box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         overflow: hidden; display: flex; flex-direction: column;
     }
+
     @media print {
         body { background: none; margin: 0; }
         .document-container { margin: 0; width: 100%; }
         .page { margin: 0; box-shadow: none; page-break-after: always; width: 100%; height: 100%; }
     }
+
     h1, h2, h3, h4 { font-family: 'Gowun Batang', serif; color: var(--primary-purple); }
 
     /* Headers & Footers */
     .page-header { border-bottom: 2px solid var(--primary-purple); padding-bottom: 10px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
-    .page-header h2 { font-size: 18pt; margin: 0; }
+    .page-header h2 { font-size: 18pt; margin: 0; color: var(--primary-purple); }
     .page-header span { font-size: 10pt; color: #666; }
     .page-footer { position: absolute; bottom: 15mm; left: 20mm; right: 20mm; text-align: center; border-top: 1px solid #ddd; padding-top: 10px; font-size: 9pt; color: #999; display: flex; justify-content: space-between; }
 
     /* Content Elements */
     .section-title { font-size: 15pt; color: var(--primary-purple); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; border-left: 5px solid var(--accent-gold); padding-left: 10px; }
-    .highlight-box { background-color: #F3E5F5; padding: 20px; margin: var(--highlight-margin-v) 0; border-radius: 8px; }
+    .highlight-box { background-color: var(--bg-purple-light); padding: 20px; margin: var(--highlight-margin-v) 0; border-radius: 8px; }
+    
     .img-box { width: 100%; height: var(--img-box-height); background-color: #eee; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; color: #888; border: 1px solid #ddd; overflow: hidden;  margin: var(--img-box-margin-v) 0; }
     .img-box img { width: 100%; height: 100%; object-fit: cover; }
+    
     .img-h-300 { height: var(--img-h-300); }
     .img-h-250 { height: var(--img-h-250); }
+    .img-h-220 { height: var(--img-h-220); }
     .img-h-180 { height: var(--img-h-180); }
     .img-h-150 { height: var(--img-h-150); }
-
-    /* User text blocks (safe text-only editing area) */
-    .user-text-block { margin-top: var(--user-block-gap); padding: 12px; border: 1px dashed #ccc; border-radius: 8px; background: #fff; }
-    .user-text-title { font-weight: 700; margin-bottom: 6px; color: var(--primary-purple); }
-    .user-text-block p { margin: 6px 0; }
-    .user-text-block ul { margin: 6px 0 6px 18px; }
-
 
     /* Tables */
     .proposal-table { width: 100%; border-collapse: collapse; margin-top: var(--table-margin-top); font-size: 9pt; }
     .proposal-table th { background-color: var(--primary-purple); color: white; padding: var(--table-cell-padding); text-align: center; border: 1px solid #ddd; }
     .proposal-table td { border: 1px solid #ddd; padding: var(--table-cell-padding); vertical-align: middle; }
-    .tag { background: #E1BEE7; color: #4A148C; padding: 2px 5px; border-radius: 4px; font-size: 8pt; font-weight: bold; margin-right: 4px; }
-
+    
     /* Cover */
     .cover-page { background: linear-gradient(135deg, #4A148C 0%, #2E0249 100%); color: white; justify-content: center; text-align: center; }
     .cover-title { font-size: 38pt; color: white; margin-bottom: 20px; line-height: 1.2; }
     .cover-year { font-size: 20pt; color: var(--accent-gold); margin-bottom: 30px; display: block; font-weight: bold; }
 </style>
-
-<style>
-/* AI로 생성된 페이지가 템플릿과 섞였을 때 최소한 보기 좋게 만드는 스타일 */
-.page.generated-page { background: white; }
-.page.generated-page .gen-wrap { padding: 60px 70px; }
-.page.generated-page .gen-title { font-size: 44px; margin: 0 0 8px 0; color: var(--accent-navy, #0B2A4A); }
-.page.generated-page .gen-sub { font-size: 18px; margin: 0 0 22px 0; color: #555; }
-.page.generated-page .gen-p { font-size: 14pt; line-height: 1.55; margin: 0 0 12px 0; }
-.page.generated-page .gen-ul { margin: 0 0 14px 20px; font-size: 14pt; line-height: 1.55; }
-.page.generated-page .gen-table { width: 100%; border-collapse: collapse; font-size: 12pt; }
-.page.generated-page .gen-table th, .page.generated-page .gen-table td { border: 1px solid #ddd; padding: 8px; vertical-align: top; }
-.page.generated-page .gen-table th { background: #f7f7f7; font-weight: 700; }
-.page.generated-page .gen-table-wrap { overflow-x: auto; margin: 16px 0; }
-</style>
-
 </head>
 <body>
 
@@ -117,418 +106,800 @@
         </div>
     </div>
 
-    <!--PAGE_START:1-->
-<div class="page">
+    <div class="page">
         <div class="page-header">
             <h2>01. 병원 소개 및 인사말</h2>
             <span>New Goryeo Hospital</span>
         </div>
-        <div class="img-box img-h-300">
+        
+        <div class="img-box img-h-220">
             <img src="placeholder_hospital_view.jpg" alt="병원 전경">
         </div>
-        <div class="highlight-box" style="background: white; padding: 0;">
-            <h3 style="margin-bottom: 20px; font-size: 18pt; text-align: center; color: var(--text-dark);">
-                "지역을 넘어 신뢰의 중심으로,<br>뉴고려병원이 건강을 책임지겠습니다."
+
+        <div style="background-color: #ffffff; padding: 40px; border: 1px solid #e0e0e0; border-radius: 10px; font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto;">
+
+            <h3 style="margin: 0 0 30px 0; font-size: 20px; text-align: center; color: #4A148C; letter-spacing: -0.5px; line-height: 1.4; word-break: keep-all;">
+                "귀사의 2026년,<br>
+                <span style="color: #7B1FA2; font-weight: bold;">서북부 최고의 의료 시스템</span>이<br>
+                든든하게 뒷받침하겠습니다."
             </h3>
-            <p style="text-align: justify; margin-bottom: 20px;">
-                안녕하십니까. 뉴고려병원 검진사업부입니다.<br>
-                2026년을 맞이하여 귀사의 임직원 여러분께 건강과 활력이 가득하시기를 기원합니다.
-                뉴고려병원은 지난 시간 동안 지역 사회와 기업의 든든한 건강 파트너로서 성장해 왔습니다.
+            <p style="text-align: justify; margin-bottom: 20px; font-size: 14px; word-break: keep-all;">
+                안녕하십니까, 뉴고려병원입니다.<br>
+                새로운 도약을 준비하는 2026년, 귀사의 가장 큰 자산인 임직원 여러분의 건승을 기원합니다.
             </p>
-            <p style="text-align: justify;">
-                본 제안서는 <strong>서북부 최대 규모의 시설</strong>과 <strong>검증된 의료 시스템</strong>을 바탕으로 설계된 맞춤형 건강검진 프로그램을 담고 있습니다.
-                귀사의 소중한 인재들이 최상의 컨디션으로 업무에 임할 수 있도록 최고의 서비스를 약속드립니다.
+            <p style="text-align: justify; margin-bottom: 20px; font-size: 14px; word-break: keep-all;">
+                기업 검진은 단순한 복지를 넘어, <strong>기업의 경쟁력을 지키는 핵심 투자</strong>입니다.<br>
+                뉴고려병원은 <strong>압도적인 시설 규모</strong>와 <strong>검증된 전문 센터</strong>를 기반으로,
+                귀사의 임직원들이 최상의 컨디션으로 업무에 몰입할 수 있도록 돕겠습니다.
+            </p>
+            <p style="text-align: justify; margin: 0; font-size: 14px; word-break: keep-all;">
+                믿고 맡길 수 있는 <strong>'평생 주치의'</strong>로서, 차원이 다른 건강검진 솔루션을 제안합니다.
             </p>
         </div>
-        <!--TABLE_START:1--><table class="proposal-table">
+        
+        <table class="proposal-table" style="margin-top: 30px;">
             <tr>
-                <th width="30%">위치</th>
+                <th width="30%">병원 위치</th>
                 <td>경기도 김포시 김포한강3로 283 (장기동)</td>
             </tr>
             <tr>
-                <th>규모</th>
-                <td>300병상 규모 종합병원 / 포괄 2차 종합병원</td>
+                <th>검진 규모</th>
+                <td> 4층 단일규모 700평 </td>
             </tr>
-        </table><!--TABLE_END:1-->
+            <tr>
+                <th>보유 장비</th>
+                <td> 128ch CT, 3.0T MRI, 내시경, 초음파 등 </td>
+            </tr>
+            <tr>
+                <th>검진 항목</th>
+                <td> 종합검진, 일반검진, 암검진, 특수검진 등 </td>
+            </tr>
+        </table>
         <div class="page-footer"><span>2026 Health Checkup Proposal</span><span>Page 1</span></div>
     </div>
-<!--PAGE_END:1-->
-<!--PAGE_START:2-->
-<div class="page">
-        <div class="page-header">
-            <h2>02. 병원 규모 및 전문성</h2>
-            <span>종합병원 기반의 검진 시스템</span>
+
+    <div class="page" style="font-family: 'Malgun Gothic', sans-serif; color: #333; line-height: 1.6;">
+
+        <div class="page-header" style="border-bottom: 2px solid #4A148C; padding-bottom: 10px; margin-bottom: 30px;">
+            <h2 style="color: #4A148C; font-size: 24px; margin: 0; display: inline-block;">02. 병원 규모 및 전문성</h2>
+            <span style="float: right; color: #666; font-size: 14px; margin-top: 10px;">종합병원 기반의 원스톱 검진 시스템</span>
         </div>
 
-        <h3 class="section-title">포괄 2차 종합병원 선정</h3>
-        <p style="margin-bottom: 15px;">
-            지역 내 필수의료를 포괄적으로 제공하며, 중등도 이상의 진료 및 수술, 응급진료가 24시간 가능한 병원입니다.
-        </p>
+        <h3 class="section-title" style="color: #4A148C; font-size: 18px; border-left: 5px solid #4A148C; padding-left: 10px; margin-bottom: 15px;">
+            믿을 수 있는 '포괄 2차 종합병원'
+        </h3>
+        <div class="highlight-box" style="background-color: #F3E5F5; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+            <p style="margin: 0; word-break: keep-all; text-align: justify;">
+                <strong>포괄 2차 종합병원이란?</strong><br>
+                지역 주민이 수도권 대형병원까지 가지 않아도 입원, 수술, 응급진료 등 <strong>중등도 수준의 필수의료를 24시간 안정적으로 받을 수 있도록 설계된 병원</strong>입니다. 단순한 병상 수가 아닌, 진료과의 유기적인 협력 시스템을 갖춘 역량 있는 병원임을 의미합니다.
+            </p>
+        </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-             <div class="img-box img-h-150">
-                <img src="placeholder_cert_mark.jpg" alt="인증마크 모음">
+        <h3 class="section-title" style="color: #4A148C; font-size: 18px; border-left: 5px solid #4A148C; padding-left: 10px; margin-bottom: 15px;">
+            대외 기관이 검증한 우수성
+        </h3>
+        <div style="display: flex; gap: 20px; margin-bottom: 30px; align-items: center;">
+            <div class="img-box" style="flex: 1; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; height: 160px; display: flex; align-items: center; justify-content: center; background: #eee;">
+                <img src="placeholder_cert_mark.jpg" alt="인증마크 모음" style="max-width: 100%; max-height: 100%;">
             </div>
-            <div class="highlight-box" style="margin: 0; display: flex; flex-direction: column; justify-content: center;">
-                <ul style="padding-left: 20px; line-height: 1.8;">
+
+            <div style="flex: 1.5; display: flex; flex-direction: column; justify-content: center;">
+                <ul style="padding-left: 20px; line-height: 2.0; margin: 0; word-break: keep-all;">
+                    <li>
+                        <strong style="color: #7B1FA2;">보건관리전문기관 평가 2년 연속 S등급</strong>
+                        <br><span style="font-size: 0.9em; color: #666;">(한국산업안전보건공단 주관, 2024~2025)</span>
+                    </li>
                     <li><strong>보건복지부</strong> 의료기관 인증 획득</li>
-                    <li><strong>산업안전보건공단</strong> 평가 2년 연속 S등급</li>
+                    <li><strong>지역응급의료센터</strong> 지정 (365일 24시간 운영)</li>
                     <li><strong>심혈관 중재시술</strong> 인증 의료기관</li>
-                    <li><strong>지역응급의료센터</strong> 지정 (365일 24시간)</li>
                 </ul>
             </div>
         </div>
 
-        <h3 class="section-title">12개 전문 센터 협진</h3>
-        <p style="margin-bottom: 10px;">검진 결과 이상 소견 시, 원내 12개 전문 센터로 즉시 연계가 가능합니다.</p>
-        <!--TABLE_START:2--><table class="proposal-table">
-            <tr>
-                <td width="25%"><strong>뇌신경센터</strong></td>
-                <td>뇌졸중, 뇌혈관 질환 예방 및 치료</td>
-                <td width="25%"><strong>심혈관센터</strong></td>
-                <td>심근경색, 협심증 전문 시술</td>
-            </tr>
-            <tr>
-                <td><strong>소화기센터</strong></td>
-                <td>위/대장 내시경 및 용종 제거</td>
-                <td><strong>관절/척추센터</strong></td>
-                <td>비수술/수술적 통증 치료</td>
-            </tr>
-            <tr>
-                <td><strong>응급의료센터</strong></td>
-                <td>신속한 진단 및 처치 (24시간)</td>
-                <td><strong>외상센터</strong></td>
-                <td>산업재해, 교통사고 외상 진료</td>
-            </tr>
-        </table><!--TABLE_END:2-->
+        <h3 class="section-title" style="color: #4A148C; font-size: 18px; border-left: 5px solid #4A148C; padding-left: 10px; margin-bottom: 15px;">
+            12개 전문 센터 협진 시스템
+        </h3>
+        <p style="margin-bottom: 15px; word-break: keep-all;">
+            검진 결과 이상 소견 발견 시, 원내 12개 전문 센터로 <strong>즉시 연계(Fast-Track)</strong>되어 신속한 치료가 가능합니다.
+        </p>
 
+        <table class="proposal-table" style="width: 100%; border-collapse: collapse; border-top: 2px solid #4A148C; font-size: 14px;">
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 10px; background: #F3E5F5; font-weight: bold; width: 20%; color: #4A148C;">뇌신경센터</td>
+                <td style="padding: 10px; width: 30%;">뇌질환 예방 및 치료</td>
+                <td style="padding: 10px; background: #F3E5F5; font-weight: bold; width: 20%; color: #4A148C;">심혈관센터</td>
+                <td style="padding: 10px; width: 30%;">심혈관 질환 전문 시술</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 10px; background: #F3E5F5; font-weight: bold; color: #4A148C;">소화기센터</td>
+                <td style="padding: 10px;">위, 대장 내과 진료 및 치료</td>
+                <td style="padding: 10px; background: #F3E5F5; font-weight: bold; color: #4A148C;">관절/척추센터</td>
+                <td style="padding: 10px;">척추 관철 진료 및 치료</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 10px; background: #F3E5F5; font-weight: bold; color: #4A148C;">응급의료센터</td>
+                <td style="padding: 10px;">24시간 응급실 운영</td>
+                <td style="padding: 10px; background: #F3E5F5; font-weight: bold; color: #4A148C;">외상센터</td>
+                <td style="padding: 10px;">교통사고 등 중증 외상</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 10px; background: #F3E5F5; font-weight: bold; color: #4A148C;">신장센터</td>
+                <td style="padding: 10px;">혈액투석실 운영 및 관리</td>
+                <td style="padding: 10px; background: #F3E5F5; font-weight: bold; color: #4A148C;">재활치료센터</td>
+                <td style="padding: 10px;">장애/통증 포괄 재활 치료</td>
+            </tr>
+        </table>
+        <p style="margin-top: 10px; font-size: 13px; color: #666; text-align: right;">
+            ※ 이 외 통증센터, 소아청소년센터, 평생건강증진센터 등 총 12개 센터 운영
+        </p>
         <div class="page-footer"><span>2026 Health Checkup Proposal</span><span>Page 2</span></div>
     </div>
-<!--PAGE_END:2-->
-<!--PAGE_START:3-->
-<div class="page">
-        <div class="page-header">
-            <h2>03. 검진센터 시설 특장점</h2>
-            <span>서북부 최대 규모 One-Stop 시스템</span>
+
+    <div class="page" style="font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto;">
+
+        <div class="page-header" style="border-bottom: 2px solid #5D3F92; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: end;">
+            <h2 style="color: #5D3F92; font-size: 24px; margin: 0; font-weight: bold;">03. 검진센터 시설 특장점</h2>
+            <span style="color: #666; font-size: 14px; margin-bottom: 5px;">700평 단일 층 기반의 One-Stop 시스템</span>
         </div>
 
-        <div class="img-box">
-             <img src="placeholder_center_interior.jpg" alt="검진센터 내부">
+        <div class="img-box" style="width: 100%; height: 250px; background-color: #eee; margin-bottom: 25px; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd;">
+             <img src="placeholder_center_interior.jpg" alt="검진센터 내부 전경" style="width: 100%; height: 100%; object-fit: cover;">
         </div>
 
-        <h3 class="section-title">700평 단일 규모 & One-Stop 시스템</h3>
-        <p>
-            뉴고려병원 건강검진센터는 약 700평 규모의 단일 층(One-floor) 구조로 설계되어 있습니다.
-            접수부터 기초검사, 초음파, 내시경까지 <strong>층간 이동 없이 한 층에서</strong> 검사가 진행되어 불필요한 동선을 최소화했습니다.
+        <h3 class="section-title" style="color: #333; font-size: 20px; font-weight: bold; margin-bottom: 10px; word-break: keep-all;">
+            "접수부터 내시경까지, <span style="color: #5D3F92;">타 층 이동 없는</span> 쾌적한 검진"
+        </h3>
+        <p style="text-align: justify; margin-bottom: 30px; word-break: keep-all; color: #555;">
+            뉴고려병원 건강검진센터는 <strong>약 700평 규모의 단일 층(One-floor)</strong>으로 설계되어 있습니다.
+            문진, 채혈, 영상촬영 등 모든 과정이 한 층에서 물 흐르듯 이어져, 수검자의 동선을 최소화하고 편안함을 극대화했습니다.
         </p>
 
-        <!--ICON_GROUP_START:process_steps-->
-<div style="margin-top: 30px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center;">
-            <div style="background:#f4f4f4; padding:15px; border-radius:8px;">
-                <i class="fas fa-file-signature" style="font-size:20pt; color:var(--secondary-purple); margin-bottom:10px;"></i><br>
-                <strong>01. 접수</strong>
+        <div style="background-color: #F8F5FF; border-radius: 15px; padding: 25px; margin-bottom: 20px; border: 1px solid #E1D5F2;">
+            <h4 style="text-align: center; color: #5D3F92; margin-top: 0; margin-bottom: 20px; font-size: 16px;">
+                ▼ ONE-STOP 검진 존 (Zone) 구성
+            </h4>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;">
+
+                <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <i class="fas fa-edit" style="font-size: 20pt; color: #7E57C2; margin-bottom: 8px;"></i>
+                    <div style="font-weight: bold; font-size: 14px; color: #333;">01. 접수/수납</div>
+                </div>
+
+                <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <i class="fas fa-clipboard-user" style="font-size: 20pt; color: #7E57C2; margin-bottom: 8px;"></i>
+                    <div style="font-weight: bold; font-size: 14px; color: #333;">02. 문진실</div>
+                </div>
+
+                <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <i class="fas fa-stethoscope" style="font-size: 20pt; color: #7E57C2; margin-bottom: 8px;"></i>
+                    <div style="font-weight: bold; font-size: 14px; color: #333;">03. 기초검사실</div>
+                </div>
+
+                <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <i class="fas fa-microscope" style="font-size: 20pt; color: #7E57C2; margin-bottom: 8px;"></i>
+                    <div style="font-weight: bold; font-size: 14px; color: #333;">04. 병리검사실</div>
+                </div>
+
+                <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <i class="fas fa-x-ray" style="font-size: 20pt; color: #7E57C2; margin-bottom: 8px;"></i>
+                    <div style="font-weight: bold; font-size: 14px; color: #333;">05. CT/촬영실</div>
+                </div>
+
+                <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <i class="fas fa-wave-square" style="font-size: 20pt; color: #7E57C2; margin-bottom: 8px;"></i>
+                    <div style="font-weight: bold; font-size: 14px; color: #333;">06. 초음파실</div>
+                </div>
+
+                <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <i class="fas fa-venus" style="font-size: 20pt; color: #7E57C2; margin-bottom: 8px;"></i>
+                    <div style="font-weight: bold; font-size: 14px; color: #333;">07. 여성의학존</div>
+                </div>
+
+                <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <i class="fas fa-procedures" style="font-size: 20pt; color: #7E57C2; margin-bottom: 8px;"></i>
+                    <div style="font-weight: bold; font-size: 14px; color: #333;">08. 내시경센터</div>
+                </div>
+
+                <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <i class="fas fa-tooth" style="font-size: 20pt; color: #7E57C2; margin-bottom: 8px;"></i>
+                    <div style="font-weight: bold; font-size: 14px; color: #333;">09. 치과</div>
+                </div>
+
             </div>
-            <div style="background:#f4f4f4; padding:15px; border-radius:8px;">
-                <i class="fas fa-stethoscope" style="font-size:20pt; color:var(--secondary-purple); margin-bottom:10px;"></i><br>
-                <strong>02. 기초검사</strong>
-            </div>
-            <div style="background:#f4f4f4; padding:15px; border-radius:8px;">
-                <i class="fas fa-wave-square" style="font-size:20pt; color:var(--secondary-purple); margin-bottom:10px;"></i><br>
-                <strong>03. 초음파</strong>
-            </div>
-            <div style="background:#f4f4f4; padding:15px; border-radius:8px;">
-                <i class="fas fa-procedures" style="font-size:20pt; color:var(--secondary-purple); margin-bottom:10px;"></i><br>
-                <strong>04. 내시경</strong>
+
+            <div style="text-align: center; margin-top: 15px; font-weight: bold; color: #5D3F92; font-size: 14px;">
+                <i class="fas fa-check-circle"></i> 9개 핵심 검진 구역이 모두 한 층에 있습니다.
             </div>
         </div>
-<!--ICON_GROUP_END:process_steps-->
-        <p style="text-align: center; margin-top: 10px; font-weight: bold; color: var(--primary-purple);">
-            ▲ 이 모든 과정이 한 층에서 이루어집니다.
-        </p>
 
-        <div class="page-footer"><span>2026 Health Checkup Proposal</span><span>Page 3</span></div>
+        <div class="page-footer" style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 10px; display: flex; justify-content: space-between; font-size: 12px; color: #999;">
+            <span>2026 Health Checkup Proposal</span>
+            <span>Page 3</span>
+        </div>
+
     </div>
-<!--PAGE_END:3-->
-<!--PAGE_START:4-->
-<div class="page">
-        <div class="page-header">
-            <h2>04. 첨단 의료장비 및 전문 의료진</h2>
-            <span>대학병원급 정밀 검사 장비</span>
+
+    <div class="page" style="font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto;">
+
+        <div class="page-header" style="border-bottom: 2px solid #5D3F92; padding-bottom: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: end;">
+            <h2 style="color: #5D3F92; font-size: 24px; margin: 0; font-weight: bold;">04. 첨단 의료장비 및 전문 의료진</h2>
+            <span style="color: #666; font-size: 14px; margin-bottom: 5px;">대학병원급 정밀 검사 인프라</span>
         </div>
 
-        <h3 class="section-title">최첨단 영상의학 장비 보유</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <h3 class="section-title" style="color: #333; font-size: 20px; font-weight: bold; margin-bottom: 15px; border-left: 5px solid #5D3F92; padding-left: 10px;">
+            대학병원급 최첨단 영상 장비
+        </h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 40px;">
+            <div style="background: #fff;">
+                 <div class="img-box" style="height: 220px; overflow: hidden; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px; background: #eee; display: flex; align-items: center; justify-content: center;">
+                    <img src="placeholder_mri.jpg" alt="MRI 장비" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <h4 style="color: #5D3F92; margin: 0 0 10px 0; font-size: 18px;">3.0T MRI (Philips) 2대</h4>
+                <p style="font-size: 14px; color: #555; margin: 0; word-break: keep-all;">
+                    대학병원에서 사용하는 최상위 기종으로, 뇌/혈관/관절의 미세한 병변까지 놓치지 않고 정밀하게 잡아냅니다. 기존 장비 대비 촬영 속도가 빠르고 소음이 적습니다.
+                </p>
+            </div>
             <div>
-                 <div class="img-box img-h-180">
-                    <img src="placeholder_mri.jpg" alt="MRI 장비">
+                 <div class="img-box" style="height: 220px; overflow: hidden; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px; background: #eee; display: flex; align-items: center; justify-content: center;">
+                    <img src="placeholder_ct.jpg" alt="CT 장비" style="width: 100%; height: 100%; object-fit: cover;">
                 </div>
-                <h4>3.0T MRI (Philips) 2대</h4>
-                <p style="font-size: 9pt;">뇌, 혈관, 관절 등의 미세한 병변까지 정밀하게 검사 가능한 대학병원급 최상위 기종입니다.</p>
+                <h4 style="color: #5D3F92; margin: 0 0 10px 0; font-size: 18px;">128ch MDCT (GE)</h4>
+                <p style="font-size: 14px; color: #555; margin: 0; word-break: keep-all;">
+                    단 한 번의 촬영으로 폐, 복부, 심장의 3차원 입체 영상을 구현합니다. AI 기반 기술로 방사선 피폭량을 획기적으로 줄여 안전한 검사가 가능합니다.
+                </p>
+            </div>
+        </div>
+
+        <h3 class="section-title" style="color: #333; font-size: 20px; font-weight: bold; margin-bottom: 15px; border-left: 5px solid #5D3F92; padding-left: 10px;">
+            분과별 전문의 상주 및 직접 판독
+        </h3>
+        <p style="margin-bottom: 20px; word-break: keep-all; color: #555;">
+            검진의 정확도는 장비뿐만 아니라 판독하는 의료진의 실력에 달려 있습니다. 뉴고려병원은 각 분과별 전문의가 상주하여 검사부터 판독까지 직접 시행합니다.
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 40px;">
+            <div style="background: #F8F5FF; padding: 15px 5px; text-align: center; border-radius: 8px; border: 1px solid #E1D5F2;">
+                <i class="fas fa-user-md" style="font-size: 24px; color: #7E57C2; margin-bottom: 8px;"></i>
+                <div style="font-weight: bold; font-size: 15px;">소화기내과</div>
+            </div>
+            <div style="background: #F8F5FF; padding: 15px 5px; text-align: center; border-radius: 8px; border: 1px solid #E1D5F2;">
+                <i class="fas fa-x-ray" style="font-size: 24px; color: #7E57C2; margin-bottom: 8px;"></i>
+                <div style="font-weight: bold; font-size: 15px;">영상의학과</div>
+            </div>
+            <div style="background: #F8F5FF; padding: 15px 5px; text-align: center; border-radius: 8px; border: 1px solid #E1D5F2;">
+                <i class="fas fa-industry" style="font-size: 24px; color: #7E57C2; margin-bottom: 8px;"></i>
+                <div style="font-weight: bold; font-size: 15px;">직업환경의학과</div>
+            </div>
+            <div style="background: #F8F5FF; padding: 15px 5px; text-align: center; border-radius: 8px; border: 1px solid #E1D5F2;">
+                <i class="fas fa-tooth" style="font-size: 24px; color: #7E57C2; margin-bottom: 8px;"></i>
+                <div style="font-weight: bold; font-size: 15px;">치과</div>
+            </div>
+        </div>
+
+        <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; display: flex; align-items: center; gap: 20px;">
+            <div style="flex: 0 0 60px; text-align: center;">
+                 <i class="fas fa-pump-medical" style="font-size: 30px; color: #5D3F92;"></i>
             </div>
             <div>
-                 <div class="img-box img-h-180">
-                    <img src="placeholder_ct.jpg" alt="CT 장비">
-                </div>
-                <h4>128ch MDCT (GE)</h4>
-                <p style="font-size: 9pt;">폐, 복부, 심장의 3차원 입체 영상을 빠르고 정확하게 구현하여 방사선 피폭을 최소화합니다.</p>
+                <h4 style="margin: 0 0 5px 0; font-size: 16px; color: #333;">안심할 수 있는 철저한 감염 관리</h4>
+                <p style="margin: 0; font-size: 13px; color: #666; word-break: keep-all;">
+                    대한소화기내시경학회 가이드라인을 준수하여, 모든 내시경 장비는 1:1 사용 후 즉시 전문 세척 및 소독을 실시합니다. (일회용 마우스피스 사용 원칙)
+                </p>
             </div>
         </div>
 
-        <h3 class="section-title" style="margin-top: 30px;">검진센터 전문 의료진 상주</h3>
-        <p>
-            소화기내과, 영상의학과, 직업환경의학과, 부인과, 치과 등 각 분과별 전문의가 센터 내에 상주하여 직접 검사 및 판독을 시행합니다.
+        <div class="page-footer" style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 10px; display: flex; justify-content: space-between; font-size: 12px; color: #999;">
+            <span>2026 Health Checkup Proposal</span>
+            <span>Page 4</span>
+        </div>
+    </div>
+
+    <div class="page" style="font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto;">
+
+        <div class="page-header" style="border-bottom: 2px solid #5D3F92; padding-bottom: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: end;">
+            <h2 style="color: #5D3F92; font-size: 24px; margin: 0; font-weight: bold;">05. 수검자 편의 서비스</h2>
+            <span style="color: #666; font-size: 14px; margin-bottom: 5px;">고객 중심의 편리한 검진 환경</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+
+            <div style="border: 1px solid #e0e0e0; border-radius: 12px; padding: 25px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <div style="background: #F8F5FF; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                        <i class="fas fa-calendar-check" style="font-size: 24px; color: #7E57C2;"></i>
+                    </div>
+                    <h3 style="margin: 0; font-size: 18px; color: #333;">일요일 검진 실시</h3>
+                </div>
+                <p style="margin: 0; font-size: 14px; color: #555; word-break: keep-all; line-height: 1.5;">
+                    평일에 시간을 내기 어려운 임직원분들을 위해 <strong>연 3회 일요일 검진</strong>을 운영합니다.<br>
+                    <span style="font-size: 13px; color: #888; margin-top: 5px; display: block;">(예정: 9월, 11월, 12월 셋째 주)</span>
+                </p>
+            </div>
+
+            <div style="border: 1px solid #e0e0e0; border-radius: 12px; padding: 25px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <div style="background: #F8F5FF; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                        <i class="fas fa-parking" style="font-size: 24px; color: #7E57C2;"></i>
+                    </div>
+                    <h3 style="margin: 0; font-size: 18px; color: #333;">여유로운 주차 공간</h3>
+                </div>
+                <p style="margin: 0; font-size: 14px; color: #555; word-break: keep-all; line-height: 1.5;">
+                    원내 주차타워 및 인근 공영주차장을 포함해 <strong>총 300여 대 규모의 주차 공간</strong>을 확보했습니다. 검진 수검자에게는 무료 주차권을 지원합니다.
+                </p>
+            </div>
+
+            <div style="border: 1px solid #e0e0e0; border-radius: 12px; padding: 25px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <div style="background: #F8F5FF; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                        <i class="fas fa-handshake" style="font-size: 24px; color: #7E57C2;"></i>
+                    </div>
+                    <h3 style="margin: 0; font-size: 18px; color: #333;">15개 플랫폼 제휴</h3>
+                </div>
+                <p style="margin: 0; font-size: 14px; color: #555; word-break: keep-all; line-height: 1.5;">
+                    GC케어, 인피니트, 현대이지웰 등 국내 주요 검진 플랫폼과 계약되어 있어, <strong>기업별 전용 예약 시스템 및 정산 연동</strong>이 원활합니다.
+                </p>
+            </div>
+
+            <div style="border: 1px solid #e0e0e0; border-radius: 12px; padding: 25px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <div style="background: #F8F5FF; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                        <i class="fas fa-comments" style="font-size: 24px; color: #7E57C2;"></i>
+                    </div>
+                    <h3 style="margin: 0; font-size: 18px; color: #333;">고객 만족 및 사후 관리</h3>
+                </div>
+                <p style="margin: 0; font-size: 14px; color: #555; word-break: keep-all; line-height: 1.5;">
+                    모바일 및 콜센터를 통해 <strong>수검자의 불편 사항 개선 및 검진 결과 사후 관리</strong>로 지속적 건강관리를 지원합니다.
+                </p>
+            </div>
+
+        </div>
+
+        <h3 class="section-title" style="color: #333; font-size: 20px; font-weight: bold; margin-bottom: 15px; border-left: 5px solid #5D3F92; padding-left: 10px;">
+            스마트 모바일 검진 시스템
+        </h3>
+        <div style="position: relative; border-radius: 12px; overflow: hidden; border: 1px solid #ddd;">
+            <div class="img-box" style="height: 300px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center;">
+                 <img src="placeholder_mobile_app.jpg" alt="모바일 예약 및 결과 조회" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6); color: white; padding: 15px;">
+                <p style="margin: 0; text-align: center; font-size: 14px;">
+                    <i class="fas fa-mobile-alt"></i> 예약부터 문진표 작성, 결과 조회까지 <strong>내 손안에서 한 번에</strong> 해결하세요.
+                </p>
+            </div>
+        </div>
+
+        <div class="page-footer" style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 10px; display: flex; justify-content: space-between; font-size: 12px; color: #999;">
+            <span>2026 Health Checkup Proposal</span>
+            <span>Page 5</span>
+        </div>
+    </div>
+
+    <div class="page" style="font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto;">
+
+        <div class="page-header" style="border-bottom: 2px solid #5D3F92; padding-bottom: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: end;">
+            <h2 style="color: #5D3F92; font-size: 24px; margin: 0; font-weight: bold;">06. 찾아가는 출장 검진 서비스</h2>
+            <span style="color: #666; font-size: 14px; margin-bottom: 5px;">사업장으로 직접 찾아가는 의료 서비스</span>
+        </div>
+
+        <div class="img-box" style="width: 100%; height: 280px; background-color: #eee; margin-bottom: 25px; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd;">
+             <img src="placeholder_bus.jpg" alt="뉴고려병원 최신형 출장 검진 버스" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+
+        <h3 class="section-title" style="color: #333; font-size: 20px; font-weight: bold; margin-bottom: 15px; border-left: 5px solid #5D3F92; padding-left: 10px; word-break: keep-all;">
+            "병원 방문이 어려운 임직원을 위해, <span style="color: #5D3F92;">병원이 직접 찾아갑니다.</span>"
+        </h3>
+        <p style="text-align: justify; margin-bottom: 30px; word-break: keep-all; color: #555;">
+            업무 특성상 자리를 비우기 힘들거나, 병원 방문이 번거로운 임직원들을 위해 <strong>최신 설비를 갖춘 대형 검진 버스</strong>가 귀사의 사업장으로 방문합니다.
+            병원 내원 검진과 동일한 수준의 정밀한 검사가 가능하며, 단시간 내에 많은 인원이 효율적으로 검진을 마칠 수 있습니다.
         </p>
-        <div class="highlight-box">
-            <!--ICON_GROUP_START:centers_list-->
-<ul style="display: flex; justify-content: space-around; list-style: none; font-weight: bold;">
-                <li><i class="fas fa-user-md"></i> 소화기내과</li>
-                <li><i class="fas fa-x-ray"></i> 영상의학과</li>
-                <li><i class="fas fa-industry"></i> 직업환경의학과</li>
-                <li><i class="fas fa-tooth"></i> 치과</li>
-            </ul>
-<!--ICON_GROUP_END:centers_list-->
-        </div>
 
-        <div class="page-footer"><span>2026 Health Checkup Proposal</span><span>Page 4</span></div>
-    </div>
-<!--PAGE_END:4-->
-<!--PAGE_START:5-->
-<div class="page">
-        <div class="page-header">
-            <h2>05. 수검자 편의 서비스</h2>
-            <span>고객 중심의 편리한 검진 환경</span>
-        </div>
+        <div style="background-color: #F8F5FF; border-radius: 15px; padding: 25px; margin-bottom: 30px; border: 1px solid #E1D5F2;">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: center;">
 
-        <!--TABLE_START:3--><table class="proposal-table" style="margin-bottom: 25px;">
-            <tr>
-                <th width="20%" style="font-size:12pt;"><i class="fas fa-calendar-alt"></i><br>일요일 검진</th>
-                <td>
-                    <strong>직장인을 위한 일요일 검진 실시</strong><br>
-                    평일에 시간을 내기 어려운 분들을 위해 연 3회 일요일 검진을 운영합니다.<br>
-                    <span style="color: #666; font-size: 9pt;">(예정: 9월, 11월, 12월 / 병원 사정에 따라 변동 가능)</span>
-                </td>
-            </tr>
-            <tr>
-                <th style="font-size:12pt;"><i class="fas fa-parking"></i><br>주차 지원</th>
-                <td>
-                    <strong>총 309대 규모 주차 공간 확보</strong><br>
-                    원내 주차장 및 임시 장기 7 공영주차장 주차권을 지원하여 주차 불편을 해소했습니다.
-                </td>
-            </tr>
-            <tr>
-                <th style="font-size:12pt;"><i class="fas fa-mobile-alt"></i><br>모바일 시스템</th>
-                <td>
-                    <strong>전용 예약 사이트 및 모바일 문진</strong><br>
-                    - 예약부터 문진표 작성, 결과 조회까지 모바일로 간편하게 진행<br>
-                    - 검진 전 주의사항 및 위치 정보 자동 안내
-                </td>
-            </tr>
-            <tr>
-                <th style="font-size:12pt;"><i class="fas fa-link"></i><br>플랫폼 제휴</th>
-                <td>
-                    <strong>국내 15개 검진 플랫폼 계약 완료</strong><br>
-                    GC케어, 인피니트케어, 현대이지웰 등 주요 플랫폼과 연동되어 예약 및 정산이 원활합니다.
-                </td>
-            </tr>
-        </table><!--TABLE_END:3-->
-
-        <div class="img-box img-h-250">
-             <img src="placeholder_mobile_app.jpg" alt="모바일 예약 시스템">
-        </div>
-
-        <div class="page-footer"><span>2026 Health Checkup Proposal</span><span>Page 5</span></div>
-    </div>
-<!--PAGE_END:5-->
-<!--PAGE_START:6-->
-<div class="page">
-        <div class="page-header">
-            <h2>06. 기업 맞춤형 지원 시스템</h2>
-            <span>산업안전보건 및 사후관리</span>
-        </div>
-
-        <h3 class="section-title">특수건강검진 및 출장검진</h3>
-        <p>뉴고려병원은 <strong>특수건강진단 지정 기관</strong>으로 산업안전보건법에 따른 필수 검진이 가능합니다.</p>
-        <div style="display: flex; gap: 15px; margin-top: 15px;">
-            <div style="flex: 1;">
-                 <div class="img-box img-h-150">
-                    <img src="placeholder_bus.jpg" alt="출장 검진 버스">
+                <div>
+                    <div style="background: white; width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                        <i class="fas fa-x-ray" style="font-size: 24px; color: #7E57C2;"></i>
+                    </div>
+                    <h4 style="margin: 0 0 10px 0; font-size: 16px; color: #333;">최신 의료 장비 탑재</h4>
+                    <p style="font-size: 13px; color: #666; word-break: keep-all; line-height: 1.4;">
+                        Digital X-Ray, 청력 부스 등 최신 검사 장비를 차량 내 완비하여 정확한 결과 산출
+                    </p>
                 </div>
-                <p style="text-align: center; font-weight: bold;">출장검진 버스 및 청력차량 보유</p>
+
+                <div>
+                    <div style="background: white; width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                        <i class="fas fa-user-nurse" style="font-size: 24px; color: #7E57C2;"></i>
+                    </div>
+                    <h4 style="margin: 0 0 10px 0; font-size: 16px; color: #333;">숙련된 전담팀 구성</h4>
+                    <p style="font-size: 13px; color: #666; word-break: keep-all; line-height: 1.4;">
+                        임상병리사, 방사선사, 간호사 등 출장 검진 경험이 풍부한 전문 의료팀 현장 투입
+                    </p>
+                </div>
+
+                <div>
+                    <div style="background: white; width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                        <i class="fas fa-chart-line" style="font-size: 24px; color: #7E57C2;"></i>
+                    </div>
+                    <h4 style="margin: 0 0 10px 0; font-size: 16px; color: #333;">수검률(참여율) 제고</h4>
+                    <p style="font-size: 13px; color: #666; word-break: keep-all; line-height: 1.4;">
+                        사업장 내에서 원스톱으로 진행되어 업무 공백 최소화 및 직원 검진 참여율 극대화
+                    </p>
+                </div>
+
             </div>
-            <div style="flex: 1; padding: 10px; background: #f9f9f9; font-size: 9.5pt;">
-                <ul style="padding-left: 20px;">
-                    <li>공단검진, 종합검진, 특수검진 동시 진행 가능</li>
-                    <li>사업장 방문 출장 검진 지원</li>
-                    <li>보건관리전문기관 평가 S등급 (보건관리 대행 가능)</li>
+        </div>
+
+        <h3 class="section-title" style="color: #333; font-size: 18px; font-weight: bold; margin-bottom: 15px; border-left: 5px solid #5D3F92; padding-left: 10px;">
+            출장 검진 프로세스 및 가능 항목
+        </h3>
+
+        <div style="display: flex; gap: 20px; align-items: stretch;">
+            <div style="flex: 1; border: 1px solid #ddd; border-radius: 10px; padding: 20px; background: #fff;">
+                <h4 style="margin: 0 0 15px 0; color: #5D3F92; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                    <i class="fas fa-clipboard-list"></i> 주요 검사 항목
+                </h4>
+                <ul style="padding-left: 20px; margin: 0; font-size: 14px; color: #555; line-height: 1.8;">
+                    <li>일반 건강검진 (신체계측, 혈압 등)</li>
+                    <li>구강 검진 (치과의사 동행 시)</li>
+                    <li>혈액 검사 및 요 검사</li>
+                    <li>흉부 X-선 촬영 (Digital DR)</li>
+                    <li>특수건강진단 (유해인자 노출군)</li>
                 </ul>
             </div>
+
+            <div style="flex: 1.2; border: 1px solid #ddd; border-radius: 10px; padding: 20px; background: #fff;">
+                <h4 style="margin: 0 0 15px 0; color: #5D3F92; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                    <i class="fas fa-sync-alt"></i> 진행 절차
+                </h4>
+                <div style="font-size: 14px; color: #555; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; align-items: center;">
+                        <span style="background: #7E57C2; color: #fff; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 10px;">1</span>
+                        일정 협의 및 대상자 명단 확정
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <span style="background: #7E57C2; color: #fff; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 10px;">2</span>
+                        출장 검진팀 방문 및 시스템 설치
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <span style="background: #7E57C2; color: #fff; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 10px;">3</span>
+                        검진 실시 (문진/채혈/촬영 등)
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <span style="background: #7E57C2; color: #fff; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 10px;">4</span>
+                        결과 통보 및 사후 관리 연계
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <h3 class="section-title" style="margin-top: 30px;">체계적인 사후관리 (Follow-up)</h3>
-        <div class="highlight-box">
-            <ul style="list-style: none;">
-                <li style="margin-bottom: 10px;">
-                    <strong><i class="fas fa-user-nurse"></i> CRM 전담 간호사 배정</strong><br>
-                    유소견자 발생 시 전문 간호사가 직접 상담하고 진료 예약을 지원합니다.
-                </li>
-                <li style="margin-bottom: 10px;">
-                    <strong><i class="fas fa-file-medical-alt"></i> 공상 및 산재 처리 지원</strong><br>
-                    직업환경의학과 및 원무팀 협조를 통해 업무상 재해 처리를 위한 행정적 도움을 드립니다.
-                </li>
-            </ul>
+        <div class="page-footer" style="margin-top: 40px; border-top: 1px solid #ddd; padding-top: 10px; display: flex; justify-content: space-between; font-size: 12px; color: #999;">
+            <span>2026 Health Checkup Proposal</span>
+            <span>Page 6</span>
         </div>
 
-        <div class="page-footer"><span>2026 Health Checkup Proposal</span><span>Page 6</span></div>
     </div>
-<!--PAGE_END:6-->
-<!--PAGE_START:7-->
-<div class="page">
-        <div class="page-header">
-            <h2>07. 검진 프로그램 제안 (A그룹)</h2>
-            <span>기본 정밀 종합검진 (전 직원 대상)</span>
+
+    <div class="page" style="font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto;">
+        <div class="page-header" style="border-bottom: 2px solid #5D3F92; padding-bottom: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: end;">
+            <h2 style="color: #5D3F92; font-size: 24px; margin: 0; font-weight: bold;">07. 검진 프로그램 제안 (공통)</h2>
+            <span style="color: #666; font-size: 14px; margin-bottom: 5px;">공통항목 + 장비항목 (90여종)</span>
         </div>
 
-        <!--TABLE_START:4--><table class="proposal-table">
-            <tr>
-                <th width="15%">구분</th>
-                <th>상세 항목 및 설명</th>
+        <table class="proposal-table" style="width: 100%; border-collapse: collapse; font-size: 12px; border-top: 2px solid #5D3F92; margin-bottom: 20px;">
+            <tr style="background: #F8F5FF; color: #5D3F92;">
+                <th style="padding: 14px; text-align: center; border-bottom: 1px solid #ddd; width: 25%;">구분</th>
+                <th style="padding: 14px; text-align: left; border-bottom: 1px solid #ddd;">발견 가능 질환 및 진단</th>
             </tr>
             <tr>
-                <td><strong>기초/신체</strong></td>
-                <td>신장, 체중, 비만도, 시력, 청력, 혈압, 허리둘레, 인바디(체성분)</td>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">01 신체계측</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">신장, 체중, 비만도, 체질량지수, 시력, 청력, 허리둘레, 맥박 등</td>
             </tr>
             <tr>
-                <td><strong>혈액/소변</strong></td>
-                <td>
-                    <strong>총 90여종 정밀 분석</strong><br>
-                    간기능, 고지혈증, 당뇨, 신장기능, 통풍, 췌장효소, 빈혈, 혈액형, 관절염,
-                    전해질, 갑상선기능, 간염(A/B/C형), 매독/에이즈, 종양표지자(암표지자) 등
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">02 안압 검사</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">눈의 압력을 측정, 녹내장, 안구 고/저혈압 등 질환 검사</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">03 폐활량 검사</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">강하게 숨을 내쉴 때 배출되는 공기의 양을 측정, 폐쇄성 폐질환, 천식 등 질환 검사</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">04 전해질 검사</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">혈액 내 크레아틴 키나제 수치를 측정하여 근육 손상이나 질병을 평가</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">05 혈액 검사</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">
+                    적혈구, 백혈구, 혈색소, 혈소판, 공복혈당, 총콜레스테롤, HDL, 중성지방, LDL, 크레아티닌, E-GFR, 지오티, 지피티, 감마지티피, 알부민, 총단백, 총빌리루빈, 직접빌리루빈, 간접빌리루빈, 알칼리성인산효소, 젖산탈수소효소, 혈중요소질소, 요산 등 이상 수치 검사
                 </td>
             </tr>
             <tr>
-                <td><strong>장비 검사</strong></td>
-                <td>
-                    흉부 X-ray (폐결핵/폐렴), 심전도 (부정맥), 안압/안저 검사,<br>
-                    <strong>위내시경 (수면 포함)</strong> - 용종 발견 시 제거 가능
-                </td>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">06 골격계 질환</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">척추관 협착증, 추간판 탈출, 퇴행성 질환 등의 목 질환 진단</td>
             </tr>
             <tr>
-                <td style="background-color: #E1BEE7; color: #4A148C; font-weight: bold;">선택 정밀<br>(택 1)</td>
-                <td>
-                    <strong>아래 항목 중 1가지 선택</strong><br>
-                    1. <span class="tag">초음파</span> 갑상선 초음파 / 경동맥 초음파 / 복부비만 CT<br>
-                    2. <span class="tag">CT</span> 뇌 CT / 저선량 폐 CT / 요추 CT / 경추 CT<br>
-                    3. <span class="tag">여성</span> 유방 초음파 / 경질(자궁) 초음파<br>
-                    4. <span class="tag">기타</span> 골밀도(QCT)+비타민D / 동맥경화도(ABI)
-                </td>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">07 감염성 검사</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">혈액 내 C-반응성 단백질의 농도를 측정하여 염증이나 감염의 존재를 확인</td>
             </tr>
-        </table><!--TABLE_END:4-->
-        <p style="margin-top: 10px; font-size: 9pt; color: #666;">
-            ※ 위내시경 수면비용 포함 / 조직검사 및 용종제거 비용 별도 / 대장내시경 변경 시 추가비용 발생
-        </p>
-        <div class="img-box img-h-150">
-             <img src="placeholder_program_a.jpg" alt="검진 진행 모습">
-        </div>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">08 갑상선 기능 검사</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">TSH, Free T4, T3 등, 갑상선 및 뇌하수체 호르몬의 수준을 측정</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">09 부갑상선 기능 검사</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">부갑상선 기능 항진증이나 저하증과 같은 부갑상선 관련 질환을 진단</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">10 간 기능 검사</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">간의 건강과 기능을 평가하는 데 사용되는 일련의 혈액 검사</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">11 종양 표지자 검사</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">CEA(간, 대장, 췌장, 위암, 유방암, 폐), 난소(CA125), AFP(간), CA19-9(췌장, 담관) 등 표지자를 이용 암과 종양 등을 검사</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">16 (여) 유방촬영 검사</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">촉진으로는 발견하기 어려운 작은 종양이나 비정상적인 조직 변화, 유방암을 조기에 발견하기 위한 특수 X선 검사</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">18 위내시경 검사</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">위염, 위궤양, 위암, 위 출혈, 헬리코박터 파일로리균 감염 등을 위한 검사</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">20 복부초음파 검사</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">간, 담낭, 비장, 췌장, 신장 등 장기의 상태와 질환 여부를 검사</td>
+            </tr>
+        </table>
 
-        <div class="page-footer"><span>2026 Health Checkup Proposal</span><span>Page 7</span></div>
+        <div class="page-footer" style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px; display: flex; justify-content: space-between; font-size: 12px; color: #999;">
+            <span>2026 Health Checkup Proposal</span>
+            <span>Page 7</span>
+        </div>
     </div>
-<!--PAGE_END:7-->
-<!--PAGE_START:8-->
-<div class="page">
-        <div class="page-header">
-            <h2>08. 검진 프로그램 제안 (B/C그룹)</h2>
-            <span>연령별/직급별 맞춤 심화 정밀검진</span>
+
+    <div class="page" style="font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto;">
+        <div class="page-header" style="border-bottom: 2px solid #5D3F92; padding-bottom: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: end;">
+            <h2 style="color: #5D3F92; font-size: 24px; margin: 0; font-weight: bold;">08. 검진 프로그램 제안 (A그룹)</h2>
+            <span style="color: #666; font-size: 14px; margin-bottom: 5px;">선택 정밀 검사 (택 1)</span>
         </div>
 
-        <h3 class="section-title">B그룹 : 심화 정밀형 (35세 이상 권장)</h3>
-        <!--TABLE_START:5--><table class="proposal-table" style="margin-bottom: 30px;">
-            <tr>
-                <th width="20%">구분</th>
-                <th>주요 추가/선택 항목</th>
-            </tr>
-            <tr>
-                <td rowspan="2"><strong>특화 선택<br>(택 1)</strong></td>
-                <td>
-                    <span class="tag">소화기</span> <strong>대장수면내시경</strong><br>
-                    <span style="font-size:8pt;">(대장암 가족력 있거나 40세 이상 추천, 용종 제거 시 비용 별도)</span>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span class="tag">기타정밀</span><br>
-                    - 심장 초음파 (심부전, 판막질환)<br>
-                    - 알레르기 91종 검사 (음식/호흡기 MAST)<br>
-                    - 부정맥 웨어러블 검사 (S-Patch)<br>
-                    - 알츠온 치매 위험도 혈액검사
-                </td>
-            </tr>
-        </table><!--TABLE_END:5-->
+        <h3 style="color: #333; font-size: 18px; font-weight: bold; margin-bottom: 15px; border-left: 5px solid #5D3F92; padding-left: 10px;">A그룹 선택 항목 (아래 항목 중 택 1)</h3>
 
-        <h3 class="section-title">C그룹 : 프리미엄형 (45세 이상 권장)</h3>
-        <!--TABLE_START:6--><table class="proposal-table">
-            <tr>
-                <th width="20%">구분</th>
-                <th>프리미엄 포함 항목</th>
+        <table class="proposal-table" style="width: 100%; border-collapse: collapse; font-size: 12px; border-top: 2px solid #5D3F92; margin-bottom: 20px;">
+            <tr style="background: #F8F5FF; color: #5D3F92;">
+                <th style="padding: 14px; text-align: center; border-bottom: 1px solid #ddd; width: 25%;">항목 명</th>
+                <th style="padding: 14px; text-align: left; border-bottom: 1px solid #ddd;">발견 가능 질환 및 진단</th>
             </tr>
             <tr>
-                <td><strong>뇌 정밀</strong></td>
-                <td>
-                    <span class="tag">MRI/MRA</span> <strong>뇌 MRI + 뇌 MRA</strong> 동시 촬영<br>
-                    (뇌종양, 뇌경색, 뇌동맥류 등 뇌혈관 질환 초정밀 진단)
-                </td>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">01 갑상선 초음파</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">갑상선암, 갑상선 결절, 갑상선 낭종 등의 질환 진단</td>
             </tr>
             <tr>
-                <td><strong>척추/노화</strong></td>
-                <td>
-                    경추 MRI 또는 요추 MRI 중 택 1<br>
-                    또는 <strong>에피클락(Epiclock)</strong> 생체나이 유전자 분석 검사
-                </td>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">02 경동맥 초음파</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">경동맥 비후, 석회화, 협착, 경화반 등 진단 (고혈압/당뇨/고지혈증/흡연자 권장)</td>
             </tr>
-        </table><!--TABLE_END:6-->
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">03 뇌 CT</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">뇌종양, 뇌경색, 뇌출혈 등의 질환 발견</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">04 저선량 폐 CT</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">폐렴, 폐결핵, 폐암, 폐기종, 기관지염 등 (20년 이상 흡연자, 폐암 가족력)</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">05 요추 CT</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">척추관 협착증, 추간판 탈출, 퇴행성 질환, 골절 등의 허리 질환 진단</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">06 경추 CT</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">척추관 협착증, 추간판 탈출, 퇴행성 질환 등의 목 질환 진단</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">07 심장 MDCT</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">심장혈관(관상동맥)의 석회화 수치 측정, 동맥경화성 질환 진단 (고위험군 권장)</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">08 복부비만 CT</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">복부를 촬영하여 피하지방 대비 내장지방의 면적을 확인하여 복부내장비만 진단</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">09 골다공증 <br>QCT+비타민D</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">혈액과 장비검사를 통해 골다공증, 골감소증, 골연화증 등 대사성 골질환 진단</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">10 혈관협착도 ABI</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">동맥경화도 검사로 혈관협착, 말초혈관, 하지동맥 경화증 등 질환 발견</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold; color: #E91E63;">11 (여) 경질초음파</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">자궁암, 난소암, 난소낭종, 자궁근종 등 질환 발견</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold; color: #E91E63;">12 (여) 유방초음파</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">유방암, 유방석회화, 유방결절, 유방낭종 등 (치밀유방인 경우 권장)</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold; color: #E91E63;">19 (여) 스마트암<br>난소암</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">혈액 내 단백바이오마커를 분석하여 난소암 위험도 측정</td>
+            </tr>
+            <tr>
+                <td style="padding: 14px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">24 혈액점도검사</td>
+                <td style="padding: 14px; border-bottom: 1px solid #eee;">혈액의 끈적이는 정도 검사 (과다 점성 증후군, 심뇌혈관질환 등)</td>
+            </tr>
+        </table>
 
-        <div class="highlight-box">
-            <strong><i class="fas fa-check-circle"></i> 프로그램 공통 사항</strong><br>
-            <span style="font-size: 9.5pt;">
-                - 모든 그룹은 A그룹의 기본 검사 항목을 포함합니다.<br>
-                - 검진 비용 및 세부 항목은 귀사의 예산과 요구사항에 따라 <strong>맞춤형 조정(Customizing)</strong>이 가능합니다.
-            </span>
+        <div class="page-footer" style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px; display: flex; justify-content: space-between; font-size: 12px; color: #999;">
+            <span>2026 Health Checkup Proposal</span>
+            <span>Page 8</span>
         </div>
-
-        <div class="page-footer"><span>2026 Health Checkup Proposal</span><span>Page 8</span></div>
     </div>
-<!--PAGE_END:8-->
-<!--PAGE_START:9-->
-<div class="page">
-        <div class="page-header">
-            <h2>09. 주요 제휴 현황</h2>
-            <span>약 3,200여 개 기업이 선택한 병원</span>
+
+    <div class="page" style="font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto;">
+        <div class="page-header" style="border-bottom: 2px solid #5D3F92; padding-bottom: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: end;">
+            <h2 style="color: #5D3F92; font-size: 24px; margin: 0; font-weight: bold;">09. 검진 프로그램 제안 (B/C그룹)</h2>
+            <span style="color: #666; font-size: 14px; margin-bottom: 5px;">프리미엄 심화 검진</span>
         </div>
 
-        <div style="font-size: 9.5pt; margin-bottom: 30px;">
-            <p style="margin-bottom: 15px;"><strong>■ 관공서 및 공공기관</strong><br>
-            김포시청, 파주시청, 국민건강보험공단, 한국가스안전공사, 김포도시관리공사, KT&G, 김포세무서 등</p>
+        <h3 style="color: #333; font-size: 18px; font-weight: bold; margin-bottom: 15px; border-left: 5px solid #5D3F92; padding-left: 10px;">B그룹 : 심화 정밀 검사 (택 1)</h3>
+        
+        <table class="proposal-table" style="width: 100%; border-collapse: collapse; font-size: 12px; border-top: 2px solid #5D3F92; margin-bottom: 30px;">
+            <tr style="background: #F8F5FF; color: #5D3F92;">
+                <th style="padding: 16px; text-align: center; border-bottom: 1px solid #ddd; width: 25%;">항목 명</th>
+                <th style="padding: 16px; text-align: left; border-bottom: 1px solid #ddd;">발견 가능 질환 및 진단</th>
+            </tr>
+            <tr>
+                <td style="padding: 16px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">가. 심장 초음파</td>
+                <td style="padding: 16px; border-bottom: 1px solid #eee;">심장판막, 심실 중격 결손증, 비대형 심근증, 급성심근경색, 심근증 등 질환 발견</td>
+            </tr>
+            <tr>
+                <td style="padding: 16px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">나. 알레르기(91종)</td>
+                <td style="padding: 16px; border-bottom: 1px solid #eee;">
+                    특정물질에 대해 과도한 면역반응을 나타내는 알레르기 질환 검사<br>
+                    총 IgE, 집먼지진드기, 계란, 우유, 땅콩, 복숭아, 돼지고기 등 91종 분석
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 16px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">다. 부정맥검사<br>(S-Patch)</td>
+                <td style="padding: 16px; border-bottom: 1px solid #eee;">
+                    48시간 동안 흉부에 패치 부착, 심전도 데이터 수집 후 AI 분석.<br>
+                    빈맥, 서맥, 심방세동 등 심장마비와 뇌졸중의 원인이 되는 부정맥 조기 진단
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 16px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">라. 대장수면내시경</td>
+                <td style="padding: 16px; border-bottom: 1px solid #eee;">
+                    대장 용종, 염증성 장질환, 대장출혈, 게실질환, 혈관이형성증 등 질환 발견<br>
+                    (권장: 대장암 가족력이 있거나 40세 이상인 경우 추천)
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 16px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">마. 대장암<br>(분변_얼리텍)</td>
+                <td style="padding: 16px; border-bottom: 1px solid #eee;">대장암 조직에서 관찰되는 메틸화된 신데칸-2 DNA를 분변에서 측정하는 PCR 검사</td>
+            </tr>
+            <tr>
+                <td style="padding: 16px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">바. 알츠온 치매 검사</td>
+                <td style="padding: 16px; border-bottom: 1px solid #eee;">알츠하이머병과 연관된 올리고머화된 베타-아밀로이드만을 선택 검출하여 진단</td>
+            </tr>
+        </table>
 
-            <p style="margin-bottom: 15px;"><strong>■ 금융기관</strong><br>
-            우리은행, KB국민은행, 신한은행, IBK기업은행, 농협중앙회, 수협, 새마을금고 등</p>
+        <h3 style="color: #333; font-size: 18px; font-weight: bold; margin-bottom: 15px; border-left: 5px solid #5D3F92; padding-left: 10px;">C그룹 : 프리미엄 검사 (택 1)</h3>
+        
+        <table class="proposal-table" style="width: 100%; border-collapse: collapse; font-size: 12px; border-top: 2px solid #5D3F92;">
+            <tr style="background: #F8F5FF; color: #5D3F92;">
+                <th style="padding: 16px; text-align: center; border-bottom: 1px solid #ddd; width: 25%;">항목 명</th>
+                <th style="padding: 16px; text-align: left; border-bottom: 1px solid #ddd;">발견 가능 질환 및 진단</th>
+            </tr>
+            <tr>
+                <td style="padding: 16px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">A. 뇌 MRA+MRI</td>
+                <td style="padding: 16px; border-bottom: 1px solid #eee;">
+                    뇌MRI - 뇌 실질의 형태학적 이상, 뇌출혈, 경색, 뇌종양 등 진단<br>
+                    뇌MRA - 뇌혈관을 정밀하게 보는 검사로 뇌동맥류, 혈관기형, 협착 등 진단
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 16px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">B. 경추 MRI</td>
+                <td style="padding: 16px; border-bottom: 1px solid #eee;">경추 부위 퇴행성 질환, 디스크 탈출 정도, 신경 압박 정도, 척추관 협착증 등 진단</td>
+            </tr>
+            <tr>
+                <td style="padding: 16px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">C. 요추 MRI</td>
+                <td style="padding: 16px; border-bottom: 1px solid #eee;">요추 부위 퇴행성 질환, 디스크 탈출 정도, 신경 압박 정도, 척추관 협착증 등 진단</td>
+            </tr>
+            <tr>
+                <td style="padding: 16px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold;">D. 에피클락</td>
+                <td style="padding: 16px; border-bottom: 1px solid #eee;">후성유전체 정보를 분석해 생체나이를 측정. 암, 대사, 뇌, 골격 등의 나이를 별도<br> 분석하여 노화 예방 및 대처 방법 제공</td>
+            </tr>
+        </table>
 
-            <p style="margin-bottom: 15px;"><strong>■ 일반기업 및 건설사</strong><br>
-            LG화학, LG CNS, 삼성케미칼, 이마트, 쿠팡, CJ대한통운, 현대건설, GS건설, 롯데건설 등</p>
+        <div class="page-footer" style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 10px; display: flex; justify-content: space-between; font-size: 12px; color: #999;">
+            <span>2026 Health Checkup Proposal</span>
+            <span>Page 9</span>
         </div>
-
-        <div class="highlight-box" style="text-align: center; border-left: none; background-color: var(--primary-purple); color: white; margin-top: auto;">
-            <h3 style="color: var(--accent-gold); margin-bottom: 10px;">[검진 문의 및 상담]</h3>
-            <p style="font-size: 14pt; margin-bottom: 5px;"><strong>Tel. 1833 - 9988</strong></p>
-            <p style="font-size: 11pt;">뉴고려병원 검진사업부</p>
-        </div>
-
-        <div style="text-align: right; margin-top: 30px;">
-            <p style="font-size: 12pt; margin-bottom: 10px;">귀사의 무궁한 발전을 기원합니다.</p>
-            <h3 style="font-size: 16pt; color: var(--text-dark);">뉴고려병원장</h3>
-        </div>
-
-        <div class="page-footer"><span>2026 Health Checkup Proposal</span><span>Page 9</span></div>
     </div>
-<!--PAGE_END:9-->
+
+    <div class="page" style="font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto;">
+        <div class="page-header" style="border-bottom: 2px solid #5D3F92; padding-bottom: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: end;">
+            <h2 style="color: #5D3F92; font-size: 24px; margin: 0; font-weight: bold;">10. 뉴고려병원 건강검진 업체 현황</h2>
+            <span style="color: #666; font-size: 14px; margin-bottom: 5px;">최고의 기관과 기업들의 선택</span>
+        </div>
+
+        <div style="background-color: #4A148C; color: white; padding: 10px 20px; font-weight: bold; display: inline-block; margin-bottom: 20px; font-size: 14px;">
+            검진 업체 현황
+        </div>
+
+        <div style="font-size: 13px; line-height: 1.8; color: #444; margin-bottom: 30px;">
+
+            <h4 style="color: #4A148C; margin: 0 0 5px 0; font-size: 16px;">A. 관공서</h4>
+            <p style="margin: 0 0 20px 0; word-break: keep-all;">
+                김포시청 | 파주시청 | 김포도시관리공사 | 김포상공회의소 | 김포도시철도 | 김포세무서 | 경기남부소방서 | 경기북부소방서 | KT&G | 국민건강보험공단 | 국민연금김포지사 | 한국환경공단 | 파주시설관리공단 | 한국가스안전공사 | 한국농어촌공사 | 한국무역보험공사 | 강화시설관리공단 | 강화군청 | 계양구청 등
+            </p>
+
+            <h4 style="color: #4A148C; margin: 0 0 5px 0; font-size: 16px;">B. 금융기관</h4>
+            <p style="margin: 0 0 20px 0; word-break: keep-all;">
+                우리은행 | 기업은행 | 국민은행 | 신한은행 | 김포우체국 | 강화우체국 | 서강화농협 | 강화농협 | 고촌농협 | 오정농협 | 김포농협 | 신김포농협 | 파주인삼농협 | 농협중앙회 | 강화북부수협 | 경기북부수협 | 서울축협 | 김포축협 | 월곶신협 | 김포신협 | 통진신협 | 김포한강신협 | 대곶신협 | 김포새마을금고 | 강화산림조합 등
+            </p>
+
+            <h4 style="color: #4A148C; margin: 0 0 5px 0; font-size: 16px;">C. 협회/재단/기타 단체</h4>
+            <p style="margin: 0 0 20px 0; word-break: keep-all;">
+                LG CNS | LG화학 | 이마트 | 마켓컬리 | 쿠팡 | CJ대한통운 | 한진택배 | 롯데택배 | 로젠택배 | SSG | 김포상공회의소 | 김포시문화재단 | 자동차정비조합 | 어린이집연합회 | 김포융합지회 | 메인비즈 | 양촌상공인회 | 통진상공인회 | 하성상공인회 | 월곶상공인회 | 대곶상공인회 | 호남기업인연합회 | 한국교직원공제회 | 외식업중앙회 | 김포시피부미용협회 | 대한변호사협회 | 김포시학원연합회 | 아모텍그린 | 아이스트로 | 그린코스 | 코스나인 | 아모레퍼시픽 | ICR | 아하정보통신 | 신한벽지 | 아워홈 | 동원홈푸드 | 온누리씨엔앰 | 삼성케미칼 | 정육각 | 크린에어테크 | 성일운수 등
+            </p>
+
+            <h4 style="color: #4A148C; margin: 0 0 5px 0; font-size: 16px;">D. 건설사</h4>
+            <p style="margin: 0 0 10px 0; word-break: keep-all;">
+                롯데건설 | 서희건설 | 이랜드건설 | 대우건설 | KCC건설 | 호반건설 | 두산건설 | 대련건설 | GS건설 | 현대건설 | 대진건설 등
+            </p>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 40px;">
+            <h3 style="color: #4A148C; font-weight: bold; font-size: 20px; margin: 0;">외 3,200여개 기업체 검진 제휴 및 진행</h3>
+        </div>
+
+        <div style="background-color: #7B1FA2; height: 15px; width: 100%; margin-bottom: 5px;"></div>
+        <div style="text-align: center; color: #7B1FA2; font-size: 12px;">뉴고려병원 검진센터</div>
+
+        <div class="page-footer" style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 10px; display: flex; justify-content: space-between; font-size: 12px; color: #999;">
+            <span>2026 Health Checkup Proposal</span>
+            <span>Page 10</span>
+        </div>
+    </div>
+
+    <div class="page" style="font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; justify-content: center; height: 900px; background-color: #fcfcfc;">
+
+        <div style="text-align: center; border: 2px solid #5D3F92; padding: 60px 40px; border-radius: 15px; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.05); max-width: 600px; margin: 0 auto;">
+
+            <h2 style="color: #5D3F92; font-size: 28px; margin-bottom: 30px; letter-spacing: -1px;">
+                "건강한 기업이<br>위대한 성과를 만듭니다."
+            </h2>
+
+            <p style="font-size: 16px; color: #555; line-height: 1.8; margin-bottom: 40px; word-break: keep-all;">
+                2026년, 귀사의 소중한 임직원들이<br>
+                가장 건강한 몸과 마음으로 업무에 전념할 수 있도록<br>
+                <strong>뉴고려병원</strong>이 최고의 파트너가 되겠습니다.<br><br>
+                믿고 맡겨주신 만큼,<br>
+                <strong>정확한 검진</strong>과 <strong>세심한 케어</strong>로 보답하겠습니다.
+            </p>
+
+            <div style="background-color: #F8F5FF; padding: 20px; border-radius: 10px; margin-bottom: 30px; display: inline-block; width: 100%; box-sizing: border-box;">
+                <h3 style="color: #5D3F92; font-size: 18px; margin: 0 0 15px 0;">[ 검진 제휴 문의 ]</h3>
+                <p style="font-size: 24px; font-weight: bold; color: #333; margin: 0 0 5px 0;">
+                    <i class="fas fa-phone-alt" style="font-size: 20px; color: #5D3F92; margin-right: 10px;"></i>1833 - 9988
+                </p>
+                <p style="font-size: 14px; color: #666; margin: 0;">뉴고려병원 검진사업부</p>
+            </div>
+
+            <div style="text-align: center;">
+                <p style="font-size: 15px; color: #333; font-weight: bold;">
+                    감사합니다.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="page-footer" style="text-align: center; margin-top: 50px; font-size: 12px; color: #999;">
+            Copyright © 2026 New Korea Hospital. All Rights Reserved.
+        </div>
+
+    </div>
+
 </div>
 
 </body>
