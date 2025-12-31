@@ -1,319 +1,341 @@
 # proposal_engine.py
-# -*- coding: utf-8 -*-
-"""
-Proposal Engine (Streamlit)
-- 목적: 기본설정(수신/제안/전화), 색상/레이아웃, 이미지 교체, 그리고 '첨부(자료) 페이지 이미지'를
-  기존 HTML 템플릿 끝에 계속 추가하여 최종 1개 HTML로 내보내기.
-- 최종 HTML은 이미지가 base64로 포함되어, GitHub에 이미지 파일이 따로 없어도 단독으로 열립니다.
-"""
+# 목적: (1) 기존 HTML 템플릿의 기본정보/색상/이미지 치환
+#      (2) "자료 페이지 이미지"를 AI로 분석하여 '텍스트/표'로 추출한 뒤, 최종 HTML에 페이지로 추가
+#
+# 주의: 이 파일은 Streamlit Cloud에서도 그대로 동작하도록 "파일 시스템 + OpenAI API"만 사용합니다.
 
 from __future__ import annotations
 
-import base64
-import hashlib
-import html as htmlmod
-import io
-import json
-import mimetypes
-import os
-import re
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
-from PIL import Image
-
-
-def _safe_read_text(path: str) -> str:
-    with open(path, "r", encoding="utf-8") as f:
-        return f.read()
+import base64
+import json
+import re
 
 
-def _safe_write_text(path: str, content: str) -> None:
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(content)
-
-
-def _safe_write_json(path: str, data: dict) -> None:
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-
-
-def _safe_read_json(path: str) -> Optional[dict]:
-    if not os.path.exists(path):
-        return None
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def _guess_mime(path: str) -> str:
-    mime, _ = mimetypes.guess_type(path)
-    return mime or "image/jpeg"
-
-
-def _extract_sort_number(filename: str) -> Tuple[int, str]:
-    """파일명 끝의 숫자를 정렬 키로 사용합니다."""
-    base = os.path.splitext(os.path.basename(filename))[0]
-    m = re.search(r"(\d+)\s*$", base)
-    if m:
-        return (int(m.group(1)), filename)
-    m2 = re.findall(r"(\d+)", base)
-    if m2:
-        return (int(m2[-1]), filename)
-    return (10**9, filename)
-
-
-def _find_matching_div_close_range(html_text: str, div_open_start: int) -> Optional[Tuple[int, int]]:
-    """div_open_start 위치의 <div ...>에 대응하는 </div>의 (start, end)를 찾습니다."""
-    open_re = re.compile(r"<div\b", re.I)
-    close_re = re.compile(r"</div\s*>", re.I)
-
-    depth = 0
-    pos = div_open_start
-
-    while pos < len(html_text):
-        m_open = open_re.search(html_text, pos)
-        m_close = close_re.search(html_text, pos)
-
-        if not m_open and not m_close:
-            return None
-
-        if m_close and (not m_open or m_close.start() < m_open.start()):
-            depth -= 1
-            if depth == 0:
-                return (m_close.start(), m_close.end())
-            pos = m_close.end()
-        else:
-            depth += 1
-            pos = m_open.end()
-
-    return None
-
-
-def _ensure_root_var(html_text: str, var_name: str, value: str) -> str:
-    """ :root { ... } 블록에 CSS 변수가 있으면 값만 교체, 없으면 추가합니다. """
-    m = re.search(r":root\s*\{([^}]*)\}", html_text, flags=re.S)
-    if not m:
-        style_m = re.search(r"<style[^>]*>", html_text, flags=re.I)
-        if not style_m:
-            return html_text
-        insert_at = style_m.end()
-        add = f"\n:root{{\n  --{var_name}: {value};\n}}\n"
-        return html_text[:insert_at] + add + html_text[insert_at:]
-
-    block = m.group(1)
-    if re.search(rf"--{re.escape(var_name)}\s*:", block):
-        block2 = re.sub(
-            rf"(--{re.escape(var_name)}\s*:\s*)([^;]+)(;)",
-            rf"\g<1>{value}\g<3>",
-            block,
-            flags=re.I,
-        )
-    else:
-        block2 = block + f"\n  --{var_name}: {value};"
-    return html_text[: m.start(1)] + block2 + html_text[m.end(1) :]
-
-
-def _ensure_attachment_css(html_text: str) -> str:
-    css = """
-    /* Attachment pages (full-page images appended at export) */
-    .attachment-page { padding: 0 !important; }
-    .attachment-page .page-header, .attachment-page .page-footer { display: none !important; }
-    .attachment-img { width: 100%; height: 100%; object-fit: contain; display: block; }
-    """
-
-    if ".attachment-page" in html_text:
-        return html_text
-
-    m = re.search(r"</style\s*>", html_text, flags=re.I)
-    if not m:
-        return html_text
-    return html_text[: m.start()] + css + "\n" + html_text[m.start() :]
-
-
-def _append_attachment_pages_into_container(html_text: str, pages_html: str) -> str:
-    idx = html_text.lower().find('<div class="document-container"')
-    if idx == -1:
-        m = re.search(r"</body\s*>", html_text, flags=re.I)
-        if not m:
-            return html_text + pages_html
-        return html_text[: m.start()] + pages_html + "\n" + html_text[m.start():]
-
-    close_range = _find_matching_div_close_range(html_text, idx)
-    if not close_range:
-        return html_text + pages_html
-
-    close_start, _close_end = close_range
-    return html_text[:close_start] + "\n" + pages_html + "\n" + html_text[close_start:]
+# -----------------------------
+# 데이터 구조 (AI 추출 결과)
+# -----------------------------
+@dataclass
+class ExtractedBlock:
+    """한 페이지 안의 블록(문단/리스트/표)."""
+    type: str  # "paragraph" | "bullets" | "table"
+    text: Optional[str] = None
+    items: Optional[List[str]] = None
+    table: Optional[Dict[str, Any]] = None  # {"headers":[...], "rows":[[...], ...]}
 
 
 @dataclass
-class ImageSlot:
-    key: str
-    placeholder_filename: str
-    target_size: Tuple[int, int]  # (width_px, height_px)
+class ExtractedPage:
+    title: str
+    subtitle: str = ""
+    blocks: List[ExtractedBlock] = None
 
-
-class ProposalEngine:
-    def __init__(self, base_dir: str, attachments_src_dir: Optional[str] = None):
-        self.base_dir = base_dir
-        self.assets_dir = os.path.join(self.base_dir, "proposal_assets")
-        self.images_dir = os.path.join(self.assets_dir, "images")
-        os.makedirs(self.images_dir, exist_ok=True)
-
-        self.template_path = os.path.join(self.assets_dir, "proposal_template.html")
-        self.settings_path = os.path.join(self.assets_dir, "proposal_settings.json")
-
-        # GitHub(레포) 쪽 '자료 이미지 페이지' 폴더(읽기 전용)
-        self.attachments_src_dir = attachments_src_dir
-
-        self.image_slots: List[ImageSlot] = [
-            ImageSlot("병원 전경", "placeholder_hospital_view.jpg", (1000, 300)),
-            ImageSlot("인증마크 모음", "placeholder_cert_mark.jpg", (490, 150)),
-            ImageSlot("검진센터 내부", "placeholder_center_interior.jpg", (1000, 220)),
-            ImageSlot("MRI 장비", "placeholder_mri.jpg", (490, 180)),
-            ImageSlot("CT 장비", "placeholder_ct.jpg", (490, 180)),
-            ImageSlot("모바일 예약시스템", "placeholder_mobile_app.jpg", (1000, 250)),
-            ImageSlot("출장검진 버스", "placeholder_bus.jpg", (490, 150)),
-            ImageSlot("검진 진행 모습", "placeholder_program_a.jpg", (1000, 150)),
-        ]
-
-        self.layout_settings: Dict[str, int] = {
-            "page_padding_mm": 20,
-            "page_gap_px": 20,
-            "img_box_height_px": 220,
-            "img_margin_v_px": 10,
-            "highlight_margin_v_px": 15,
-            "table_margin_top_px": 10,
-            "table_cell_padding_px": 7,
-            "user_block_gap_px": 12,
-            "img_h_300_px": 300,
-            "img_h_250_px": 250,
-            "img_h_180_px": 180,
-            "img_h_150_px": 150,
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "title": self.title,
+            "subtitle": self.subtitle,
+            "blocks": [
+                {
+                    "type": b.type,
+                    "text": b.text,
+                    "items": b.items,
+                    "table": b.table,
+                }
+                for b in (self.blocks or [])
+            ],
         }
 
-        self._load_settings()
-        self._ensure_template_support()
+    @staticmethod
+    def from_dict(d: Dict[str, Any]) -> "ExtractedPage":
+        blocks = []
+        for b in d.get("blocks", []) or []:
+            blocks.append(
+                ExtractedBlock(
+                    type=b.get("type", ""),
+                    text=b.get("text"),
+                    items=b.get("items"),
+                    table=b.get("table"),
+                )
+            )
+        return ExtractedPage(
+            title=d.get("title", "").strip(),
+            subtitle=(d.get("subtitle") or "").strip(),
+            blocks=blocks,
+        )
 
-    def _ensure_template_support(self) -> None:
-        if not os.path.exists(self.template_path):
-            return
 
-        html_text = _safe_read_text(self.template_path)
+# -----------------------------
+# 유틸
+# -----------------------------
+def _read_text(path: Path) -> str:
+    return path.read_text(encoding="utf-8", errors="replace")
 
-        html_text = _ensure_root_var(html_text, "page-padding", f"{self.layout_settings['page_padding_mm']}mm")
-        html_text = _ensure_root_var(html_text, "page-gap", f"{self.layout_settings['page_gap_px']}px")
-        html_text = _ensure_root_var(html_text, "img-box-height", f"{self.layout_settings['img_box_height_px']}px")
-        html_text = _ensure_root_var(html_text, "img-box-margin-v", f"{self.layout_settings['img_margin_v_px']}px")
-        html_text = _ensure_root_var(html_text, "highlight-margin-v", f"{self.layout_settings['highlight_margin_v_px']}px")
-        html_text = _ensure_root_var(html_text, "table-margin-top", f"{self.layout_settings['table_margin_top_px']}px")
-        html_text = _ensure_root_var(html_text, "table-cell-padding", f"{self.layout_settings['table_cell_padding_px']}px")
-        html_text = _ensure_root_var(html_text, "user-block-gap", f"{self.layout_settings['user_block_gap_px']}px")
-        html_text = _ensure_root_var(html_text, "img-h-300", f"{self.layout_settings['img_h_300_px']}px")
-        html_text = _ensure_root_var(html_text, "img-h-250", f"{self.layout_settings['img_h_250_px']}px")
-        html_text = _ensure_root_var(html_text, "img-h-180", f"{self.layout_settings['img_h_180_px']}px")
-        html_text = _ensure_root_var(html_text, "img-h-150", f"{self.layout_settings['img_h_150_px']}px")
 
-        _safe_write_text(self.template_path, html_text)
+def _write_text(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
 
-    def _load_settings(self) -> None:
-        data = _safe_read_json(self.settings_path) or {}
-        layout = data.get("layout", {})
-        if isinstance(layout, dict):
-            for k, v in layout.items():
-                try:
-                    self.layout_settings[k] = int(v)
-                except Exception:
-                    pass
 
-    def _save_settings(self) -> None:
-        _safe_write_json(self.settings_path, {"layout": self.layout_settings})
+def _safe_regex_replace(pattern: str, repl_fn: Callable[[re.Match], str], text: str, flags: int = 0) -> str:
+    return re.sub(pattern, repl_fn, text, flags=flags)
 
-    # -------------------------------
-    # Public APIs used by streamlit_app
-    # -------------------------------
-    def set_layout_settings(self, new_settings: Dict[str, int]) -> None:
-        self.layout_settings.update(new_settings)
-        self._save_settings()
-        self._ensure_template_support()
 
-    def save_uploaded_image(self, slot_key: str, uploaded_bytes: bytes) -> str:
-        slot = next((s for s in self.image_slots if s.key == slot_key), None)
-        if not slot:
-            raise ValueError(f"Unknown slot key: {slot_key}")
+def _b64_data_url_for_image(image_path: Path) -> str:
+    # OpenAI 이미지 입력은 base64 data URL 또는 URL을 지원합니다.
+    # (공식 문서: https://platform.openai.com/docs/guides/images-vision)
+    suffix = image_path.suffix.lower().lstrip(".")
+    if suffix == "jpg":
+        suffix = "jpeg"
+    mime = f"image/{suffix}"
+    data = base64.b64encode(image_path.read_bytes()).decode("utf-8")
+    return f"data:{mime};base64,{data}"
 
-        img = Image.open(io.BytesIO(uploaded_bytes)).convert("RGB")
-        target_w, target_h = slot.target_size
-        img = img.resize((target_w, target_h), Image.Resampling.LANCZOS)
 
-        out_path = os.path.join(self.images_dir, slot.placeholder_filename)
-        img.save(out_path, format="JPEG", quality=92)
-        return out_path
+# -----------------------------
+# ProposalEngine
+# -----------------------------
+class ProposalEngine:
+    def __init__(self, template_path: str = "proposal_template.html"):
+        self.template_path = Path(template_path)
 
-    def list_attachment_images(self) -> List[str]:
-        if not self.attachments_src_dir or not os.path.isdir(self.attachments_src_dir):
+    # 1) 템플릿 로드
+    def load_template(self) -> str:
+        if not self.template_path.exists():
+            raise FileNotFoundError(f"템플릿을 찾을 수 없습니다: {self.template_path}")
+        return _read_text(self.template_path)
+
+    # 2) 기본정보 치환(수신/제안/전화 등)
+    def apply_basic_fields(self, html: str, recipient: str, proposer: str, tel: str) -> str:
+        # 템플릿 안의 문구(예: "수신 :", "제안 :", "Tel.")를 찾아 바꿉니다.
+        # 치환이 실패해도 앱이 멈추지 않도록, "패턴이 있으면 바꾸고 없으면 그냥 둡니다."
+
+        def rep_recipient(m: re.Match) -> str:
+            return f"{m.group(1)}{recipient}"
+
+        def rep_proposer(m: re.Match) -> str:
+            return f"{m.group(1)}{proposer}"
+
+        def rep_tel(m: re.Match) -> str:
+            # \1 + 숫자 시작 텍스트가 합쳐져 invalid group reference가 나는 문제를 피하려고
+            # 반드시 함수 치환을 사용합니다.
+            return f"{m.group(1)}{tel}"
+
+        html = _safe_regex_replace(r"(\<strong\>\s*수신\s*:\s*\</strong\>\s*)([^<]+)", rep_recipient, html)
+        html = _safe_regex_replace(r"(\<strong\>\s*제안\s*:\s*\</strong\>\s*)([^<]+)", rep_proposer, html)
+
+        # Tel. 1833 - 9988 형태
+        html = _safe_regex_replace(r"(Tel\.\s*)([0-9\s\-]+)", rep_tel, html)
+
+        return html
+
+    # 3) 색상(테마 변수) 치환: CSS 변수만 바꾸는 방식
+    def apply_theme(self, html: str, theme: Dict[str, str]) -> str:
+        # theme 예시:
+        # {
+        #   "--accent-blue": "#2196F3",
+        #   "--accent-gold": "#C9A227",
+        #   "--accent-navy": "#0B2A4A"
+        # }
+        for var, value in theme.items():
+            # CSS 변수 정의 부분을 찾아 교체
+            # 예: --accent-blue: #4A90E2;
+            pat = rf"({re.escape(var)}\s*:\s*)([^;]+)(;)"
+            html = re.sub(pat, rf"\1{value}\3", html)
+        return html
+
+    # 4) "AI로 추출된 페이지"를 HTML 페이지로 렌더링
+    def render_extracted_page(self, page: ExtractedPage) -> str:
+        blocks_html = []
+        for b in (page.blocks or []):
+            if b.type == "paragraph" and b.text:
+                blocks_html.append(f'<p class="gen-p">{_html_escape(b.text)}</p>')
+            elif b.type == "bullets" and b.items:
+                lis = "\n".join(f"<li>{_html_escape(it)}</li>" for it in b.items if (it or "").strip())
+                blocks_html.append(f"<ul class='gen-ul'>\n{lis}\n</ul>")
+            elif b.type == "table" and b.table:
+                blocks_html.append(_render_table(b.table))
+            # 알 수 없는 타입은 무시(앱이 죽지 않게)
+
+        subtitle_html = f'<p class="gen-sub">{_html_escape(page.subtitle)}</p>' if page.subtitle else ""
+
+        return f"""
+<div class="page generated-page">
+  <div class="gen-wrap">
+    <div class="gen-header">
+      <h1 class="gen-title">{_html_escape(page.title)}</h1>
+      {subtitle_html}
+    </div>
+    <div class="gen-body">
+      {''.join(blocks_html)}
+    </div>
+  </div>
+</div>
+"""
+
+    # 5) 최종 HTML에 페이지 추가
+    def append_pages(self, html: str, pages: Sequence[ExtractedPage]) -> str:
+        pages_html = "\n".join(self.render_extracted_page(p) for p in pages)
+
+        # 문서 컨테이너 마지막에 붙입니다.
+        marker = "</div>\n\n</body>"
+        if marker in html:
+            return html.replace(marker, f"{pages_html}\n{marker}", 1)
+
+        # 위 마커가 없으면, 그냥 </body> 직전에 붙임
+        if "</body>" in html:
+            return html.replace("</body>", f"{pages_html}\n</body>", 1)
+
+        # 정말 이상한 템플릿이라면 끝에 붙임
+        return html + pages_html
+
+    # 6) OpenAI Vision으로 이미지 -> 페이지(JSON) 추출
+    def extract_pages_from_images(
+        self,
+        openai_client: Any,
+        image_paths: Sequence[Path],
+        model: str = "gpt-4o-mini",
+        progress: Optional[Callable[[int, int, str], None]] = None,
+    ) -> List[ExtractedPage]:
+        pages: List[ExtractedPage] = []
+        total = len(image_paths)
+
+        for i, p in enumerate(image_paths, start=1):
+            if progress:
+                progress(i, total, f"분석 중: {p.name}")
+
+            page_dict = _openai_extract_one_page(openai_client, p, model=model)
+            pages.append(ExtractedPage.from_dict(page_dict))
+
+        return pages
+
+    # 7) 추출 결과를 JSON으로 저장/로드 (반복 비용 절감용)
+    def save_pages_json(self, pages: Sequence[ExtractedPage], json_path: str) -> None:
+        data = [p.to_dict() for p in pages]
+        _write_text(Path(json_path), json.dumps(data, ensure_ascii=False, indent=2))
+
+    def load_pages_json(self, json_path: str) -> List[ExtractedPage]:
+        p = Path(json_path)
+        if not p.exists():
             return []
-        files: List[str] = []
-        for name in os.listdir(self.attachments_src_dir):
-            p = os.path.join(self.attachments_src_dir, name)
-            if os.path.isfile(p) and os.path.splitext(name.lower())[1] in [".jpg", ".jpeg", ".png", ".webp"]:
-                files.append(p)
-        files.sort(key=_extract_sort_number)
-        return files
+        data = json.loads(_read_text(p))
+        return [ExtractedPage.from_dict(d) for d in (data or [])]
 
-    def build_output_html(self, recipient: str, proposer: str, tel: str, primary: str, accent: str) -> str:
-        if not os.path.exists(self.template_path):
-            raise FileNotFoundError("proposal_template.html not found in session assets.")
 
-        html_text = _safe_read_text(self.template_path)
+# -----------------------------
+# HTML 렌더 헬퍼
+# -----------------------------
+def _html_escape(s: str) -> str:
+    return (
+        s.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&#39;")
+    )
 
-        # 1) 기본정보 (invalid group reference 방지: repl 함수 사용)
-        def _repl_rec(m: re.Match) -> str:
-            return m.group(1) + htmlmod.escape(recipient)
 
-        def _repl_prop(m: re.Match) -> str:
-            return m.group(1) + htmlmod.escape(proposer)
+def _render_table(table: Dict[str, Any]) -> str:
+    headers = table.get("headers") or []
+    rows = table.get("rows") or []
 
-        def _repl_tel(m: re.Match) -> str:
-            return m.group(1) + htmlmod.escape(tel)
+    thead = ""
+    if headers:
+        ths = "".join(f"<th>{_html_escape(str(h))}</th>" for h in headers)
+        thead = f"<thead><tr>{ths}</tr></thead>"
 
-        html_text = re.sub(r"(<strong>수신\s*:\s*</strong>\s*)([^<]+)", _repl_rec, html_text)
-        html_text = re.sub(r"(<strong>제안\s*:\s*</strong>\s*)([^<]+)", _repl_prop, html_text)
-        html_text = re.sub(r"(Tel\.\s*)([0-9\s\-]+)", _repl_tel, html_text)
+    trs = []
+    for r in rows:
+        tds = "".join(f"<td>{_html_escape(str(c))}</td>" for c in (r or []))
+        trs.append(f"<tr>{tds}</tr>")
+    tbody = f"<tbody>{''.join(trs)}</tbody>"
 
-        # 2) 색상
-        html_text = _ensure_root_var(html_text, "primary-purple", primary)
-        html_text = _ensure_root_var(html_text, "accent-gold", accent)
+    return f"""
+<div class="gen-table-wrap">
+  <table class="gen-table">
+    {thead}
+    {tbody}
+  </table>
+</div>
+"""
 
-        # 3) 교체 이미지(placeholder) -> base64 embed
-        for slot in self.image_slots:
-            local_path = os.path.join(self.images_dir, slot.placeholder_filename)
-            if os.path.exists(local_path):
-                with open(local_path, "rb") as f:
-                    b64 = base64.b64encode(f.read()).decode("ascii")
-                mime = _guess_mime(local_path)
-                html_text = html_text.replace(
-                    f'src="{slot.placeholder_filename}"',
-                    f'src="data:{mime};base64,{b64}"',
-                )
 
-        # 4) 첨부(자료) 페이지 이미지들을 마지막에 계속 추가
-        attachment_files = self.list_attachment_images()
-        if attachment_files:
-            html_text = _ensure_attachment_css(html_text)
+# -----------------------------
+# OpenAI 호출 (이미지 1장 -> JSON)
+# -----------------------------
+def _openai_extract_one_page(openai_client: Any, image_path: Path, model: str = "gpt-4o-mini") -> Dict[str, Any]:
+    """
+    OpenAI Responses API를 사용합니다.
+    - 이미지 입력 방식은 공식 문서의 data URL 형태를 따릅니다.
+    - 출력은 반드시 JSON으로 받습니다.
 
-            pages: List[str] = []
-            for i, path in enumerate(attachment_files, start=1):
-                with open(path, "rb") as f:
-                    b64 = base64.b64encode(f.read()).decode("ascii")
-                mime = _guess_mime(path)
-                pages.append(
-                    '<div class="page attachment-page">\n'
-                    f'  <img class="attachment-img" src="data:{mime};base64,{b64}" alt="Attachment {i}">\n'
-                    '</div>'
-                )
+    참고:
+    - https://platform.openai.com/docs/guides/images-vision
+    - https://github.com/openai/openai-python
+    """
+    img_url = _b64_data_url_for_image(image_path)
 
-            pages_html = "\n".join(pages)
-            html_text = _append_attachment_pages_into_container(html_text, pages_html)
+    prompt = (
+        "당신은 한국어 제안서 페이지를 '텍스트/표/리스트'로 구조화하는 도우미입니다.\n"
+        "업로드된 이미지는 제안서 1페이지입니다.\n"
+        "목표: 이미지를 보고, 페이지의 '제목/부제/핵심 내용'을 HTML에 넣기 좋은 구조(JSON)로 추출하세요.\n\n"
+        "출력 형식(반드시 JSON만):\n"
+        "{\n"
+        '  "title": "페이지 제목",\n'
+        '  "subtitle": "부제(없으면 빈 문자열)",\n'
+        '  "blocks": [\n'
+        '    {"type": "paragraph", "text": "문단"},\n'
+        '    {"type": "bullets", "items": ["항목1", "항목2"]},\n'
+        '    {"type": "table", "table": {"headers": ["..."], "rows": [["..."], ["..."]]}}\n'
+        "  ]\n"
+        "}\n\n"
+        "규칙:\n"
+        "- 이미지에 있는 글자를 가능한 한 그대로 옮기되, 너무 작은 글씨로 정확히 읽기 어려우면 요약해서 써도 됩니다.\n"
+        "- 표는 가능한 한 표 형태로 유지하세요.\n"
+        "- 로고/장식용 아이콘/배경 이미지는 무시하고, 정보(텍스트)만 추출하세요.\n"
+    )
 
-        return html_text
+    # openai-python README 예시 형식을 따르는 Responses API 호출
+    response = openai_client.responses.create(
+        model=model,
+        input=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": prompt},
+                    {"type": "input_image", "image_url": img_url},
+                ],
+            }
+        ],
+    )
+
+    # Responses API는 텍스트 결과를 여러 곳에 담을 수 있으므로,
+    # 가장 안전하게 response.output_text를 사용합니다.
+    text = getattr(response, "output_text", None)
+    if not text:
+        # 일부 버전에서 output_text가 없을 수도 있어 방어적으로 처리
+        text = str(response)
+
+    # JSON 파싱 (모델이 실수로 코드블럭을 넣는 경우가 있어 제거)
+    cleaned = text.strip()
+    cleaned = re.sub(r"^```(?:json)?", "", cleaned).strip()
+    cleaned = re.sub(r"```$", "", cleaned).strip()
+
+    try:
+        data = json.loads(cleaned)
+    except Exception as e:
+        # 실패 시, 최소한의 형태로 감싸서 반환
+        data = {
+            "title": f"{image_path.stem}",
+            "subtitle": "",
+            "blocks": [{"type": "paragraph", "text": f"(JSON 파싱 실패) 원문:\n{cleaned[:1200]}"}],
+        }
+
+    # 필수 키 보정
+    data.setdefault("title", image_path.stem)
+    data.setdefault("subtitle", "")
+    data.setdefault("blocks", [])
+
+    return data
