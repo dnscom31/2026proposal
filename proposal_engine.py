@@ -3,20 +3,22 @@
 """
 목적:
 - proposal_template.html을 읽어
-  1) 기본 정보(수신/제안/Tel) 치환
+  1) 기본 정보(수신/제안/Tel/Email) 치환
   2) CSS 변수(색상) 치환
+  3) 레포(attachment_pages/)에 있는 이미지를 자동으로 data URL(base64)로 임베딩
+     → Streamlit 미리보기/다운로드 HTML에서도 이미지가 항상 표시되도록 처리
 
 주의:
-- 이미지 업로드/교체(data URL 변환) 기능은 제거된 버전입니다.
+- "이미지 업로드/교체" UI 기능은 제거된 버전입니다.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Dict
-import re
 import base64
 import mimetypes
+import re
 
 
 def _read_text(path: Path) -> str:
@@ -38,8 +40,8 @@ class ProposalEngine:
             raise FileNotFoundError(f"템플릿 파일을 찾을 수 없습니다: {self.template_path}")
         return _read_text(self.template_path)
 
-    def apply_basic_fields(self, html: str, *, recipient: str, proposer: str, tel: str) -> str:
-        # 템플릿 내 문구를 기준으로 치환합니다.
+    def apply_basic_fields(self, html: str, *, recipient: str, proposer: str, tel: str, email: str) -> str:
+        # 수신/제안
         html = _safe_sub(
             r'(<strong>\s*수신\s*:\s*</strong>\s*)([^<]+)',
             lambda m: m.group(1) + recipient,
@@ -52,29 +54,48 @@ class ProposalEngine:
             html,
             flags=re.IGNORECASE,
         )
+
+        # Tel.
         html = _safe_sub(
             r'(Tel\.\s*)([0-9\s\-]+)',
             lambda m: m.group(1) + tel,
             html,
             flags=re.IGNORECASE,
         )
+
+        # Email.
+        email_clean = (email or "").strip()
+        if email_clean:
+            html = _safe_sub(
+                r'(Email\.\s*)([^<\n]+)',
+                lambda m: m.group(1) + email_clean,
+                html,
+                flags=re.IGNORECASE,
+            )
+        else:
+            # 이메일을 입력하지 않으면, 마지막 페이지의 이메일 줄 자체를 제거
+            html = _safe_sub(
+                r'\s*<p[^>]*>\s*<i class="fas fa-envelope"[^>]*></i>\s*Email\.[\s\S]*?</p>\s*',
+                lambda m: "",
+                html,
+                flags=re.IGNORECASE,
+            )
+
         return html
 
     def apply_theme_vars(self, html: str, css_vars: Dict[str, str]) -> str:
-        # 예: {"--accent-gold": "#D4AF37"} 형태로 전달
+        # 예: {"--accent-blue": "#4A90E2"} 형태로 전달
         for var, value in css_vars.items():
-            # --var-name: <anything>;
             pattern = rf'({re.escape(var)}\s*:\s*)([^;]+)(;)'
             html = _safe_sub(pattern, lambda m, v=value: m.group(1) + v + m.group(3), html)
         return html
-
 
     def embed_attachment_images(self, html: str, assets_dir: str = "attachment_pages") -> str:
         """
         Streamlit 미리보기/다운로드 HTML에서 이미지가 항상 보이도록,
         <img src="attachment_pages/..."> 형태를 data URL(base64)로 자동 변환합니다.
 
-        - 사용자의 '이미지 교체 기능'과는 무관하게, 레포에 있는 이미지 파일만 사용합니다.
+        - 레포(attachment_pages/)에 있는 이미지 파일만 사용합니다.
         - 템플릿/테마/폰트 등의 스타일은 변경하지 않고 src만 변경합니다.
         """
         base_dir = self.template_path.parent
