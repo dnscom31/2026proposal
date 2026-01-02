@@ -64,7 +64,7 @@ st.subheader("내보내기")
 st.download_button(
     label="최종 HTML 다운로드",
     data=final_html.encode("utf-8"),
-    file_name="proposal_final.html",
+    file_name="2026_뉴고려병원_제안서.html",
     mime="text/html",
 )
 
