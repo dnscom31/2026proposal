@@ -9,9 +9,9 @@ import streamlit as st
 
 from proposal_engine import ProposalEngine
 
-st.set_page_config(page_title="제안서 HTML 생성기", layout="wide")
+st.set_page_config(page_title="소개서 HTML 생성기", layout="wide")
 
-st.title("제안서 HTML 생성기")
+st.title("소개서 HTML 생성기")
 st.caption("기본정보/색상/연락처(Email 포함)만 지원합니다. 이미지 업로드/교체 기능 없음")
 
 engine = ProposalEngine(template_path="proposal_template.html")
