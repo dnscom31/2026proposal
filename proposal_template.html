@@ -88,23 +88,35 @@
     @media print {
         @page {
             size: A4;
-            margin: 0; /* 브라우저 자체 머리글/바닥글/여백 제거 */
+            margin: 0 !important; /* 브라우저 여백 완전 제거 */
         }
         
-        body {
-            margin: 0;
-            padding: 0;
+        html, body {
+            width: 210mm;
+            height: 297mm; /* 전체 문서 높이도 A4로 고정 */
+            margin: 0 !important;
+            padding: 0 !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
 
         .page {
-            width: 210mm;
-            height: 297mm;
-            margin: 0;
+            width: 210mm !important;
+            height: 297mm !important; /* ★ 핵심: 강제로 높이를 A4로 고정 */
+            margin: 0 !important;
+            padding: 20mm !important; /* 본문 패딩 유지 */
             page-break-after: always;
-            border: none;
-            box-shadow: none;
+            page-break-inside: avoid; /* 페이지 내부에서 내용 잘림 방지 */
+            border: none !important;
+            box-sizing: border-box; /* 패딩을 포함한 크기로 계산 */
+            position: relative; /* 하단 배치 요소 위치 잡기 위해 */
+            display: block; /* 플렉스 등으로 깨짐 방지 */
+            overflow: hidden; /* 넘치는 내용 자르기 */
+        }
+
+        /* 마지막 페이지 하단이 짤리는 경우를 대비해 배경색이 있다면 꽉 채우기 */
+        .page.last-page, .section-container {
+            min-height: 100%;
         }
 
         .no-print {
