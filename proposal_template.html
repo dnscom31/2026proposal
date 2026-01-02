@@ -82,6 +82,36 @@
     .cover-page { background: linear-gradient(135deg, #4A148C 0%, #2E0249 100%); color: white; justify-content: center; text-align: center; }
     .cover-title { font-size: 38pt; color: white; margin-bottom: 20px; line-height: 1.2; }
     .cover-year { font-size: 20pt; color: var(--accent-gold); margin-bottom: 30px; display: block; font-weight: bold; }
+
+
+    /*인쇄/PDF 저장 시 스타일 고정 */
+    @media print {
+        @page {
+            size: A4;
+            margin: 0; /* 브라우저 자체 머리글/바닥글/여백 제거 */
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .page {
+            width: 210mm;
+            height: 297mm;
+            margin: 0;
+            page-break-after: always;
+            border: none;
+            box-shadow: none;
+        }
+
+        .no-print {
+            display: none !important;
+        }
+    }
+
 </style>
 </head>
 <body>
@@ -900,6 +930,7 @@
         <div class="page-footer" style="text-align: center; margin-top: 50px; font-size: 12px; color: #999;">
             Copyright © 2026 New Korea Hospital. All Rights Reserved.
         </div>
+        
 
     </div>
 
