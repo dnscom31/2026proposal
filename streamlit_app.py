@@ -34,9 +34,10 @@ with st.sidebar:
         email = st.text_input("Email.", value="")  # 비워두면 마지막 페이지 이메일 줄이 제거됩니다.
 
         st.subheader("색상(CSS 변수)")
-        accent_blue = st.color_picker("--accent-blue", "#4A90E2")
-        accent_gold = st.color_picker("--accent-gold", "#C9A227")
-        accent_navy = st.color_picker("--accent-navy", "#0B2A4A")
+        # HTML 템플릿의 :root 변수명과 일치하도록 수정
+        primary_purple = st.color_picker("--primary-purple", "#4A148C")
+        secondary_purple = st.color_picker("--secondary-purple", "#7B1FA2")
+        accent_gold = st.color_picker("--accent-gold", "#D4AF37")
 
         submitted = st.form_submit_button("견적서 생성하기")
 
@@ -55,9 +56,9 @@ if submitted:
         base_html = engine.apply_theme_vars(
             base_html,
             {
-                "--accent-blue": accent_blue,
+                "--primary-purple": primary_purple,
+                "--secondary-purple": secondary_purple,
                 "--accent-gold": accent_gold,
-                "--accent-navy": accent_navy,
             },
         )
 
@@ -113,9 +114,9 @@ settings = {
     "tel": tel,
     "email": email,
     "colors": {
-        "--accent-blue": accent_blue,
+        "--primary-purple": primary_purple,
+        "--secondary-purple": secondary_purple,
         "--accent-gold": accent_gold,
-        "--accent-navy": accent_navy,
     },
 }
 st.download_button(
