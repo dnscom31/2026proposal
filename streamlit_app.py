@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from typing import Any, Dict, Tuple
 
 import streamlit as st
@@ -25,6 +26,34 @@ def _lines(value):
 
 def _parse_lines(text: str):
     return [x.strip() for x in str(text or "").splitlines() if x.strip()]
+
+
+def _seed_editor_state(prefix: str, data: Dict[str, Any]) -> None:
+    """외부 파일을 새로 불러왔을 때 기존 위젯 상태를 해당 데이터로 갱신합니다."""
+    d = normalize_project_data(data)
+    values = {
+        f"{prefix}_title": d["title"],
+        f"{prefix}_target": d["target"],
+        f"{prefix}_period": d["period"],
+        f"{prefix}_application_period": d["application_period"],
+        f"{prefix}_phone": d["phone"],
+        f"{prefix}_qr": d["qr_url"],
+        f"{prefix}_event_title": d["event_title"],
+        f"{prefix}_event_lines": _lines(d.get("event_lines", [])),
+        f"{prefix}_common": d["common_items"],
+        f"{prefix}_group_a": _lines(d["groups"]["A"]),
+        f"{prefix}_group_b": _lines(d["groups"]["B"]),
+        f"{prefix}_group_c": _lines(d["groups"]["C"]),
+        f"{prefix}_notes": _lines(d.get("notes", [])),
+        f"{prefix}_theme": d.get("theme", "여름"),
+    }
+    for i, package in enumerate(d.get("packages", [])):
+        values[f"{prefix}_pkg_name_{i}"] = package.get("name", "")
+        values[f"{prefix}_pkg_detail_{i}"] = package.get("detail", "")
+        values[f"{prefix}_pkg_m_{i}"] = package.get("male_price", "")
+        values[f"{prefix}_pkg_f_{i}"] = package.get("female_price", "")
+    for key, value in values.items():
+        st.session_state[key] = value
 
 
 def _project_editor(data: Dict[str, Any], prefix: str, allow_theme: bool = True) -> Dict[str, Any]:
@@ -231,20 +260,27 @@ with tab_flyer:
 
     source_data = official_2026_copy()
     import_message = ""
+    source_sig = "official-2026"
 
     if source_mode == "proposal_data.json 업로드":
         uploaded_json = st.file_uploader("JSON 파일", type=["json"], key="flyer_json")
         if uploaded_json:
             try:
-                source_data = normalize_project_data(json.loads(uploaded_json.getvalue().decode("utf-8-sig")))
+                raw_bytes = uploaded_json.getvalue()
+                source_data = normalize_project_data(json.loads(raw_bytes.decode("utf-8-sig")))
+                source_sig = "json:" + hashlib.sha1(raw_bytes).hexdigest()
                 import_message = "JSON의 검진 데이터를 불러왔습니다."
             except Exception as e:
                 st.error(f"JSON을 읽지 못했습니다: {e}")
+        else:
+            source_sig = "json:none"
 
     elif source_mode == "이 프로그램에서 만든 제안서 HTML 업로드":
         uploaded_html = st.file_uploader("제안서 HTML 파일", type=["html", "htm"], key="flyer_html")
         if uploaded_html:
-            raw_html = uploaded_html.getvalue().decode("utf-8", errors="replace")
+            raw_bytes = uploaded_html.getvalue()
+            raw_html = raw_bytes.decode("utf-8", errors="replace")
+            source_sig = "html:" + hashlib.sha1(raw_bytes).hexdigest()
             embedded = proposal_engine.extract_proposal_data(raw_html)
             if embedded:
                 source_data = normalize_project_data(embedded)
@@ -258,6 +294,12 @@ with tab_flyer:
                     "과거 형식 제안서라 구조화 데이터가 없습니다. 확인 가능한 연락처만 불러오고 "
                     "검진항목은 공식 2026 기본값을 적용했습니다."
                 )
+        else:
+            source_sig = "html:none"
+
+    if st.session_state.get("standalone_source_sig") != source_sig:
+        _seed_editor_state("standalone", source_data)
+        st.session_state["standalone_source_sig"] = source_sig
 
     if import_message:
         st.info(import_message)
